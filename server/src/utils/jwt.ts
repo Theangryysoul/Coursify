@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { JwtPayload } from "../types/jwt.types.js";
+import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "../constants/auth.js"
 
 export const generateAccessToken = (userId: string) => {
   return jwt.sign(
@@ -9,7 +10,7 @@ export const generateAccessToken = (userId: string) => {
     },
     env.JWT_ACCESS_SECRET,
     {
-      expiresIn: "15m",
+      expiresIn: ACCESS_TOKEN_EXPIRY,
     }
   );
 };
@@ -21,7 +22,7 @@ export const generateRefreshToken = (userId: string) => {
     },
     env.JWT_REFRESH_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn: REFRESH_TOKEN_EXPIRY,
     }
   );
 };

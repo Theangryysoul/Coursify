@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.js";
+import { UnauthorizedError } from "../utils/errors.js";
 
 export const authenticate = (
   req: Request,
@@ -9,7 +10,7 @@ export const authenticate = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Bearer ")) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
 
   const token = authHeader.split(" ")[1];

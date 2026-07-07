@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import { RegisterUserInput, LoginUserInput } from "../types/auth.types.js";
-import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
+import { BadRequestError, UnauthorizedError, } from "../utils/errors.js";
 
 export const registerUser = async (userData: RegisterUserInput) => {
   const { name, email, password } = userData;
@@ -9,7 +10,7 @@ export const registerUser = async (userData: RegisterUserInput) => {
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
-    throw new Error("User already exists");
+    throw new BadRequestError("User already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,7 +33,7 @@ export const loginUser = async (
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-  throw new Error("Invalid email or password");
+  throw new UnauthorizedError("Invalid email or password");
   }
 
   const isPasswordCorrect = await bcrypt.compare(
@@ -41,7 +42,7 @@ export const loginUser = async (
   );
 
   if (!isPasswordCorrect) {
-    throw new Error("Invalid email or password");
+    throw new UnauthorizedError("Invalid email or password");
   }
 
   const accessToken = generateAccessToken(user._id.toString());
