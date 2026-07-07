@@ -21,6 +21,22 @@ const userSchema = new Schema(
       required: true,
       select: false,
     },
+
+    avatar: {
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
+    },
+
+    bio: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
