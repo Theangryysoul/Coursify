@@ -5,6 +5,7 @@ import userRouter from "./user.routes.js";
 import uploadRouter from "./upload.routes.js";
 import youtubeRouter from "./youtube.routes.js";
 import courseRouter from "./course.routes.js";
+import progressRouter from "./progress.routes.js";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use("/users", userRouter);
 router.use("/upload", uploadRouter);
 router.use("/youtube", youtubeRouter);
 router.use("/courses", courseRouter);
+router.use("/progress", progressRouter);
 
 
 export default router;

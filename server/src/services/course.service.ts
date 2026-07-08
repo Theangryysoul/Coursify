@@ -1,6 +1,7 @@
 import UserCourse from "../models/userCourse.model.js";
 import Video from "../models/video.model.js";
 import { NotFoundError } from "../utils/errors.js";
+import { calculateCourseProgress } from "./progress.service.js";
 
 export const getMyCourses = async (userId: string) => {
   const userCourses = await UserCourse.find({
@@ -13,7 +14,20 @@ export const getMyCourses = async (userId: string) => {
       updatedAt: -1,
     });
 
-  return userCourses;
+  const courses = await Promise.all(
+  userCourses.map(async (userCourse) => {
+    const progress = await calculateCourseProgress(
+      userCourse._id.toString()
+    );
+
+    return {
+      ...userCourse.toObject(),
+      progress,
+    };
+  })
+);
+
+return courses;
 };
 
 export const getCourseById = async (
@@ -35,8 +49,13 @@ export const getCourseById = async (
     position: 1,
   });
 
+  const progress = await calculateCourseProgress(
+  userCourse._id.toString()
+  );
+
   return {
     userCourse,
+    progress,
     videos,
   };
 };
