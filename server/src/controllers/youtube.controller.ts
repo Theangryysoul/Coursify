@@ -11,7 +11,10 @@ import {
   getVideoDetails,
   mergeVideoDetails,
   calculateTotalDuration,
-  importCourse
+  importCourse,
+  extractVideoId,
+  getVideoMetadata,
+  formatVideoMetadata
 } from "../services/youtube.service.js";
 
 export const previewYoutubeController = asyncHandler(
@@ -46,6 +49,12 @@ export const previewYoutubeController = asyncHandler(
         ...formatPlaylistMetadata(rawMetadata),
         videos: completeVideos,
       };
+    } else {
+        const videoId = extractVideoId(url)!;
+
+        const rawVideo = await getVideoMetadata(videoId);
+
+        data = formatVideoMetadata(rawVideo);
     }
 
     return successResponse(

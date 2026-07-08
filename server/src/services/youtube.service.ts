@@ -11,7 +11,11 @@ export const detectYoutubeUrlType = (url: string) => {
     return "playlist";
   }
 
-  if (parsedUrl.searchParams.has("v")) {
+  if (
+    parsedUrl.searchParams.has("v") ||
+    parsedUrl.hostname === "youtu.be" ||
+    parsedUrl.pathname.startsWith("/embed/")
+  ) {
     return "single-video";
   }
 
@@ -152,14 +156,95 @@ export const importCourse = async (
 ) => {
   const type = detectYoutubeUrlType(url);
 
-  if (type !== "playlist") {
-    throw new Error("Only playlist import is supported currently.");
-  }
+  switch (type) {
+    case "playlist":
+      return await importPlaylist(userId, url);
 
+    case "single-video":
+      return await importSingleVideo(userId, url);
+
+    default:
+      throw new Error("Invalid YouTube URL");
+  }
+};
+
+const importPlaylist = async (
+  userId: string,
+  url: string
+) => {
   const playlistId = extractPlaylistId(url)!;
 
   let course = await Course.findOne({
     playlistId,
+  });
+
+  if (course) {
+    const existingUserCourse = await UserCourse.findOne({
+      owner: userId,
+      course: course._id,
+    });
+
+    if (existingUserCourse) {
+      throw new Error("Course already exists in your library.");
+    }
+
+    return await UserCourse.create({
+      owner: userId,
+      course: course._id,
+    });
+  }
+
+  const rawMetadata = await getPlaylistMetadata(playlistId);
+  const rawVideos = await getPlaylistVideos(playlistId);
+
+  const metadata = formatPlaylistMetadata(rawMetadata);
+
+  const videos: PlaylistVideo[] = formatPlaylistVideos(rawVideos);
+
+  const details = await getVideoDetails(
+    videos.map((v) => v.videoId)
+  );
+
+  const completeVideos = mergeVideoDetails(videos, details);
+
+  course = await Course.create({
+    type: "playlist",
+    title: metadata.title,
+    description: metadata.description,
+    thumbnail: metadata.thumbnail,
+    channelName: metadata.channelName,
+    playlistId: metadata.playlistId,
+    playlistUrl: url,
+    videoCount: metadata.videoCount,
+    totalDuration: calculateTotalDuration(completeVideos),
+  });
+
+  await Video.insertMany(
+    completeVideos.map((video) => ({
+      course: course._id,
+      videoId: video.videoId,
+      youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
+      title: video.title,
+      thumbnail: video.thumbnail,
+      duration: video.duration,
+      position: video.position,
+    }))
+  );
+
+  return await UserCourse.create({
+    owner: userId,
+    course: course._id,
+  });
+};
+
+const importSingleVideo = async (
+  userId: string,
+  url: string
+) => {
+  const videoId = extractVideoId(url)!;
+
+  let course = await Course.findOne({
+    videoId,
   });
 
   // Existing Course
@@ -173,62 +258,50 @@ export const importCourse = async (
       throw new Error("Course already exists in your library.");
     }
 
-    const userCourse = await UserCourse.create({
+    return await UserCourse.create({
       owner: userId,
       course: course._id,
     });
-
-    return userCourse;
   }
 
-  // New Course
-const rawMetadata = await getPlaylistMetadata(playlistId);
+  // Fetch metadata
+  const rawVideo = await getVideoMetadata(videoId);
+  const metadata = formatVideoMetadata(rawVideo);
 
-const rawVideos = await getPlaylistVideos(playlistId);
-
-const metadata = formatPlaylistMetadata(rawMetadata);
-
-const videos: PlaylistVideo[] = formatPlaylistVideos(rawVideos);
-
-const details = await getVideoDetails(
-  videos.map((v) => v.videoId)
-);
-
-  const completeVideos = mergeVideoDetails(
-    videos,
-    details
-  );
-
-    course = await Course.create({
-    type: "playlist",
+  // Create Course
+  course = await Course.create({
+    type: "single-video",
     title: metadata.title,
     description: metadata.description,
     thumbnail: metadata.thumbnail,
     channelName: metadata.channelName,
-    playlistId: metadata.playlistId,
+    videoId: metadata.videoId,
     playlistUrl: url,
-    videoCount: metadata.videoCount,
-    totalDuration: calculateTotalDuration(completeVideos),
-    });
+    videoCount: 1,
+    totalDuration: calculateTotalDuration([
+      {
+        duration: metadata.duration,
+      },
+    ]),
+  });
 
-  await Video.insertMany(
-    completeVideos.map((video) => ({
-        course: course._id,
-        videoId: video.videoId,
-        youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
-        title: video.title,
-        thumbnail: video.thumbnail,
-        duration: video.duration,
-        position: video.position,
-    }))
-  );
+  // Create Video
+  await Video.create({
+    course: course._id,
+    videoId: metadata.videoId,
+    youtubeUrl: url,
+    title: metadata.title,
+    description: metadata.description,
+    thumbnail: metadata.thumbnail,
+    duration: metadata.duration,
+    position: 1,
+  });
 
-  const userCourse = await UserCourse.create({
+  // Create UserCourse
+  return await UserCourse.create({
     owner: userId,
     course: course._id,
   });
-
-  return userCourse;
 };
 
 export const calculateTotalDuration = (videos: { duration: string }[]) => {
@@ -249,4 +322,57 @@ export const calculateTotalDuration = (videos: { duration: string }[]) => {
   }
 
   return totalSeconds;
+};
+
+export const extractVideoId = (url: string) => {
+  const parsedUrl = new URL(url);
+
+  // youtube.com/watch?v=...
+  if (parsedUrl.searchParams.has("v")) {
+    return parsedUrl.searchParams.get("v");
+  }
+
+  // youtu.be/VIDEO_ID
+  if (parsedUrl.hostname === "youtu.be") {
+    return parsedUrl.pathname.slice(1);
+  }
+
+  // youtube.com/embed/VIDEO_ID
+  if (parsedUrl.pathname.startsWith("/embed/")) {
+    return parsedUrl.pathname.split("/")[2];
+  }
+
+  throw new Error("Invalid YouTube video URL");
+};
+
+export const getVideoMetadata = async (videoId: string) => {
+  const response = await axios.get(
+    "https://www.googleapis.com/youtube/v3/videos",
+    {
+      params: {
+        part: "snippet,contentDetails",
+        id: videoId,
+        key: env.YOUTUBE_API_KEY,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const formatVideoMetadata = (data: any) => {
+  const video = data.items[0];
+
+  return {
+    videoId: video.id,
+    title: video.snippet.title,
+    description: video.snippet.description,
+    thumbnail:
+      video.snippet.thumbnails.maxres?.url ||
+      video.snippet.thumbnails.high?.url ||
+      video.snippet.thumbnails.medium?.url ||
+      video.snippet.thumbnails.default?.url,
+    channelName: video.snippet.channelTitle,
+    duration: video.contentDetails.duration,
+  };
 };

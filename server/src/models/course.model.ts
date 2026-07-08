@@ -39,6 +39,12 @@ const courseSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    
+    videoId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
 
     playlistUrl: {
       type: String,
@@ -64,6 +70,7 @@ const courseSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+
   },
   {
     timestamps: true,
