@@ -72,3 +72,19 @@ export const refreshAccessToken = (
 
   return accessToken;
 };
+
+export const getCurrentUserService = async (
+  userId: string
+) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new UnauthorizedError("User not found");
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  };
+};

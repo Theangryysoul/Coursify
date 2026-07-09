@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { env } from "../config/env.js";
 import { successResponse } from "../utils/api-response.js";
-import { registerUser, loginUser, refreshAccessToken } from "../services/auth.service.js";
+import { registerUser, loginUser, refreshAccessToken, getCurrentUserService } from "../services/auth.service.js";
 import { UnauthorizedError } from "../utils/errors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -57,6 +57,20 @@ export const refresh = asyncHandler(
     {
       accessToken,
     })
+  }
+);
+
+export const getCurrentUser = asyncHandler(
+  async (req, res) => {
+    const user = await getCurrentUserService(
+      req.user.userId
+    );
+
+    return successResponse(
+      res,
+      "User fetched successfully",
+      user
+    );
   }
 );
 
