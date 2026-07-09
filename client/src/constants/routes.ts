@@ -7,6 +7,13 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
 
   COURSES: "/courses",
+  COURSE: "/courses/:courseId",
+
+  IMPORT: "/import",
+
+  PROGRESS: "/progress",
 
   PROFILE: "/profile",
+
+  SETTINGS: "/settings",
 } as const;

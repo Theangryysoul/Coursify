@@ -9,40 +9,30 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import CoursesPage from "@/pages/courses/CoursesPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import { DashboardLayout } from "@/layout/DashboardLayout";
+import ImportPage from "@/pages/import/ImportPage";
+import ProgressPage from "@/pages/progress/ProgressPage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+
+
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
 
-        <Route
-          path={ROUTES.DASHBOARD}
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path={ROUTES.COURSES}
-          element={
-            <ProtectedRoute>
-              <CoursesPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path={ROUTES.PROFILE}
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+            <Route path={ROUTES.COURSES} element={<CoursesPage />} />
+            <Route path={ROUTES.IMPORT} element={<ImportPage />} />
+            <Route path={ROUTES.PROGRESS} element={<ProgressPage />} />
+            <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+            <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+          </Route>
+        </Route>
       </Routes>
     </BrowserRouter>
   );
