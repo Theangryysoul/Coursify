@@ -3,6 +3,7 @@ import { env } from "../config/env.js";
 import Course from "../models/course.model.js";
 import Video from "../models/video.model.js";
 import UserCourse from "../models/userCourse.model.js";
+import { BadRequestError } from "../utils/errors.js";
 
 export const detectYoutubeUrlType = (url: string) => {
   const parsedUrl = new URL(url);
@@ -19,7 +20,7 @@ export const detectYoutubeUrlType = (url: string) => {
     return "single-video";
   }
 
-  throw new Error("Invalid YouTube URL");
+  throw new BadRequestError("Invalid YouTube URL");
 };
 
 export const extractPlaylistId = (url: string) => {
@@ -185,7 +186,7 @@ const importPlaylist = async (
     });
 
     if (existingUserCourse) {
-      throw new Error("Course already exists in your library.");
+      throw new Error("Course already exists in your library");
     }
 
     return await UserCourse.create({
@@ -342,7 +343,7 @@ export const extractVideoId = (url: string) => {
     return parsedUrl.pathname.split("/")[2];
   }
 
-  throw new Error("Invalid YouTube video URL");
+  throw new BadRequestError("Invalid YouTube URL");
 };
 
 export const getVideoMetadata = async (videoId: string) => {

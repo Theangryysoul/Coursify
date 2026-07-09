@@ -2,7 +2,6 @@ import WatchProgress from "../models/watchProgress.model.js";
 import UserCourse from "../models/userCourse.model.js";
 import Video from "../models/video.model.js";
 import { NotFoundError } from "../utils/errors.js";
-import Course from "../models/course.model.js";
 import StudySession from "../models/studySession.model.js";
 
 export const getResume = async (

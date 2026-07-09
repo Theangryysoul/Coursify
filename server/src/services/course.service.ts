@@ -37,7 +37,7 @@ export const getCourseById = async (
   const userCourse = await UserCourse.findOne({
     owner: userId,
     course: courseId,
-  }).populate("course");
+  }).populate("course").lean();
 
   if (!userCourse) {
     throw new NotFoundError("Course not found");

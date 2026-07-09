@@ -3,7 +3,7 @@ import { deleteImage ,uploadAvatar } from "../services/upload.service.js";
 import { getCurrentUser, updateAvatar } from "../services/user.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/api-response.js";
-import { NotFoundError, BadRequestError } from "../utils/errors.js";
+import { BadRequestError } from "../utils/errors.js";
 
 export const uploadAvatarController = asyncHandler(
   async (req: Request, res: Response) => {
