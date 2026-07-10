@@ -33,7 +33,7 @@ export function Navbar() {
           <button className="rounded-full p-2 transition hover:bg-accent">
             <Bell className="h-5 w-5" />
           </button>
-
+          
           <UserMenu />
         </div>
       </header>

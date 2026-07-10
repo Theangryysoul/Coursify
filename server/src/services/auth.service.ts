@@ -51,9 +51,13 @@ export const loginUser = async (
 
   return {
   user: {
-    id: user._id,
+    _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    avatar: user.avatar,
+    bio: user.bio,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   },
   accessToken,
   refreshToken,
@@ -83,8 +87,12 @@ export const getCurrentUserService = async (
   }
 
   return {
-    id: user._id,
+    _id: user._id.toString(),
     name: user.name,
     email: user.email,
+    avatar: user.avatar,
+    bio: user.bio,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 };

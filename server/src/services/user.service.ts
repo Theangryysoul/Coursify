@@ -2,7 +2,9 @@ import User from "../models/user.model.js";
 import { NotFoundError } from "../utils/errors.js";
 
 export const getCurrentUser = async (userId: string) => {
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select(
+    "name email avatar bio createdAt updatedAt"
+  );
 
   if (!user) {
     throw new NotFoundError("User not found");

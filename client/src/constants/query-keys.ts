@@ -9,3 +9,5 @@ export const QUERY_KEYS = {
 
   PROFILE: ["profile"],
 } as const;
+
+queryKey: QUERY_KEYS.CURRENT_USER
