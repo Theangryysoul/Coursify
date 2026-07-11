@@ -165,7 +165,7 @@ export const importCourse = async (
       return await importSingleVideo(userId, url);
 
     default:
-      throw new Error("Invalid YouTube URL");
+      throw new BadRequestError("Invalid YouTube URL");
   }
 };
 
@@ -186,7 +186,7 @@ const importPlaylist = async (
     });
 
     if (existingUserCourse) {
-      throw new Error("Course already exists in your library");
+      throw new BadRequestError("Course already exists in your library");
     }
 
     return await UserCourse.create({
@@ -256,7 +256,7 @@ const importSingleVideo = async (
     });
 
     if (existingUserCourse) {
-      throw new Error("Course already exists in your library.");
+      throw new BadRequestError("Course already exists in your library.");
     }
 
     return await UserCourse.create({

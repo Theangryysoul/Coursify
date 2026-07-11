@@ -7,14 +7,17 @@ import "./index.css";
 
 import AppRouter from "@/routes/AppRouter";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import AuthInitializer from "@/components/auth/AuthInitializer";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-  <QueryProvider>
-    <AppRouter />
-    <Toaster richColors position="top-right" />
-  </QueryProvider>
-  </ThemeProvider>
+      <QueryProvider>
+        <AuthInitializer>
+          <AppRouter />
+        </AuthInitializer>
+        <Toaster richColors position="top-right" />
+      </QueryProvider>
+    </ThemeProvider>
   </StrictMode>
 );
