@@ -6,5 +6,6 @@ export function useCourses() {
   return useQuery({
     queryKey: ["courses"],
     queryFn: getCourses,
+    staleTime: 0,
   });
 }

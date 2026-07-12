@@ -16,11 +16,11 @@ export function CourseCard({
 }: CourseCardProps) {
   return (
     <Card className="overflow-hidden rounded-3xl border-border/60 bg-card/60 transition hover:-translate-y-1 hover:shadow-xl">
-      <img
-        src={course.course.thumbnail}
-        alt={course.course.title}
-        className="aspect-video w-full object-cover"
-      />
+      <Link to={`/courses/${course.course._id}`}>
+      <img src={course.course.thumbnail}
+      alt={course.course.title}
+      className="aspect-video w-full object-cover cursor-pointer" />
+      </Link>
 
       <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">

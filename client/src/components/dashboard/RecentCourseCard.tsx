@@ -9,7 +9,7 @@ interface CourseCardProps {
   progress: number;
 }
 
-export function CourseCard({ title, playlist, progress }: CourseCardProps) {
+export function RecentCourseCard({ title, playlist, progress }: CourseCardProps) {
   return (
     <div className="bg-card border-border overflow-hidden rounded-2xl border backdrop-blur-md transition-all hover:-translate-y-1 hover:border-violet-500/30">
       <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-blue-600/20 to-violet-600/20">

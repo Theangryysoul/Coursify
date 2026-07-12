@@ -1,4 +1,4 @@
-import { CourseCard } from "./CourseCard";
+import { RecentCourseCard } from "./RecentCourseCard";
 
 export function RecentCourses() {
   return (
@@ -8,25 +8,25 @@ export function RecentCourses() {
       </h2>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <CourseCard
+        <RecentCourseCard
           title="MERN Backend Bootcamp"
           playlist="Backend"
           progress={72}
         />
 
-        <CourseCard
+        <RecentCourseCard
           title="React Masterclass"
           playlist="Frontend"
           progress={35}
         />
 
-        <CourseCard
+        <RecentCourseCard
           title="System Design"
           playlist="Interview"
           progress={15}
         />
 
-        <CourseCard
+        <RecentCourseCard
           title="Docker & DevOps"
           playlist="DevOps"
           progress={5}

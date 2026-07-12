@@ -127,3 +127,10 @@
     @apply font-sans;
     }
 }
+
+.youtube-player,
+.youtube-player > div,
+.youtube-player iframe {
+  width: 100%;
+  height: 100%;
+}
