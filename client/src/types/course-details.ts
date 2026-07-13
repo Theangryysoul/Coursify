@@ -9,11 +9,17 @@ export interface Video {
   duration: string;
   position: number;
 
-  completed?: boolean;
+  completed: boolean;
+  currentTime: number;
 }
 
 export interface CourseDetails {
   userCourse: CourseItem;
   progress: number;
   videos: Video[];
+
+  resume: {
+    videoId: string;
+    currentTime: number;
+  } | null;
 }

@@ -27,7 +27,7 @@ export const getResume = async (
 
   const progress = await WatchProgress.findOne({
     userCourse: userCourse._id,
-    video: video._id, // MongoDB ObjectId
+    video: video._id,
   });
 
   if (!progress) {
@@ -79,20 +79,86 @@ const calculateUniqueSeconds = (
 export const calculateCourseProgress = async (
   userCourseId: string
 ) => {
+  const userCourse = await UserCourse.findById(
+    userCourseId
+  ).populate("course");
+
+  if (!userCourse) {
+    return 0;
+  }
+
   const progresses = await WatchProgress.find({
     userCourse: userCourseId,
   });
 
-  if (progresses.length === 0) {
+  const watchedSeconds = progresses.reduce(
+    (total, progress) =>
+      total + progress.uniqueWatchedSeconds,
+    0
+  );
+
+  const totalDuration = (
+    userCourse.course as any
+  ).totalDuration;
+
+  if (!totalDuration) {
     return 0;
   }
 
-  const completedVideos = progresses.filter(
-    (progress) => progress.completed
+  return Math.min(
+    100,
+    Math.round(
+      (watchedSeconds / totalDuration) * 100
+    )
+  );
+};
+
+const updateStudySession = async (
+  userId: string,
+  watchedSeconds: number
+) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  await StudySession.findOneAndUpdate(
+    {
+      user: userId,
+      date: today,
+    },
+    {
+      $inc: {
+        watchedSeconds,
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+};
+
+const updateCourseProgress = async (
+  userCourseId: string
+) => {
+  const progresses = await WatchProgress.find({
+    userCourse: userCourseId,
+  });
+
+  const total = progresses.length;
+
+  const completed = progresses.filter(
+    (p) => p.completed
   ).length;
 
-  return Math.round(
-    (completedVideos / progresses.length) * 100
+  const progress =
+    total === 0
+      ? 0
+      : Math.round((completed / total) * 100);
+
+  await UserCourse.findByIdAndUpdate(
+    userCourseId,
+    {
+      progress,
+    }
   );
 };
 
@@ -133,8 +199,48 @@ export const updateProgress = async (
     progress = await WatchProgress.create({
       userCourse: userCourse._id,
       video: video._id,
+      expectedNextSecond: 0,
     });
   }
+
+  const segmentLength =
+  data.segment.end - data.segment.start;
+
+  // Reject impossible segments
+  if (
+    segmentLength <= 0 ||
+    segmentLength > 8
+  ) 
+  {
+    return progress;
+  }
+  const tolerance = 3;
+
+// Ignore large forward seeks for progress counting,
+// but still keep the course "recently interacted".
+  if (
+    Math.abs(
+      data.segment.start -
+        progress.expectedNextSecond
+    ) > tolerance
+  ) {
+    progress.currentTime = data.currentTime;
+    progress.lastWatchedAt = new Date();
+
+    await progress.save();
+
+    await UserCourse.findByIdAndUpdate(
+      userCourse._id,
+      {
+        $currentDate: {
+          updatedAt: true,
+        },
+      }
+    );
+
+    return progress;
+  }
+
     const mergedSegments = mergeSegments([
     ...progress.watchedSegments,
     data.segment,
@@ -144,49 +250,58 @@ export const updateProgress = async (
     calculateUniqueSeconds(mergedSegments);
 
     progress.currentTime = data.currentTime;
+    progress.expectedNextSecond =
+      data.segment.end;
     progress.watchedSegments = mergedSegments as any;
     progress.uniqueWatchedSeconds = uniqueSeconds;
     progress.lastWatchedAt = new Date();
 
+    const wasCompleted = progress.completed;
+
     progress.completed =
-        uniqueSeconds >= data.duration * 0.95;
+      uniqueSeconds >= data.duration * 0.95;
+
+    if (!wasCompleted && progress.completed) {
+      progress.currentTime = data.duration;
+    }
 
       await progress.save();
-      await updateStudySession(
-        userId,
-        data.segment.end - data.segment.start
-        );
-      await updateCourseProgress(
-        userCourse._id.toString()
-        );
 
-  return progress;
-};
+      await UserCourse.findByIdAndUpdate(
+        userCourse._id,
+        {
+          $currentDate: {
+            updatedAt: true,
+          },
+        }
+      );
 
-const updateCourseProgress = async (
-  userCourseId: string
-) => {
-  const progresses = await WatchProgress.find({
-    userCourse: userCourseId,
-  });
+    await updateCourseProgress(
+      userCourse._id.toString()
+    );
 
-  const total = progresses.length;
+    const totalVideos = await Video.countDocuments({
+      course: video.course,
+    });
 
-  const completed = progresses.filter(
-    (p) => p.completed
-  ).length;
+    const completedVideos = await WatchProgress.countDocuments({
+      userCourse: userCourse._id,
+      completed: true,
+    });
 
-  const progress =
-    total === 0
-      ? 0
-      : Math.round((completed / total) * 100);
+    await UserCourse.findByIdAndUpdate(
+      userCourse._id,
+      {
+        status:
+          completedVideos === 0
+            ? "Not Started"
+            : completedVideos === totalVideos
+            ? "Completed"
+            : "In Progress",
+      }
+    );
 
-  await UserCourse.findByIdAndUpdate(
-    userCourseId,
-    {
-      progress,
-    }
-  );
+    return progress;
 };
 
 export const getLearningStats = async (
@@ -239,28 +354,7 @@ export const getLearningStats = async (
   };
 };
 
-const updateStudySession = async (
-  userId: string,
-  watchedSeconds: number
-) => {
-  const today = new Date().toISOString().split("T")[0];
 
-  await StudySession.findOneAndUpdate(
-    {
-      user: userId,
-      date: today,
-    },
-    {
-      $inc: {
-        watchedSeconds,
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-    }
-  );
-};
 
 export const calculateStudyStreak = async (
   userId: string

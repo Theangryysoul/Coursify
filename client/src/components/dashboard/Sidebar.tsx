@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { SIDEBAR_ITEMS } from "./sidebar-items";
 import { SidebarItem } from "./SidebarItem";
 
@@ -9,7 +11,9 @@ export function Sidebar() {
       {/* Logo */}
 
       <div className="border-border border-b p-6">
-        <Logo className="h-10 w-auto" />
+        <Link to="/dashboard">
+          <Logo className="h-10 w-auto transition-opacity hover:opacity-80" />
+        </Link>
       </div>
 
       {/* Navigation */}

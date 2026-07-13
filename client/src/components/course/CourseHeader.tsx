@@ -7,11 +7,13 @@ import { Progress } from "@/components/ui/progress";
 interface CourseHeaderProps {
   title: string;
   progress: number;
+  duration: string;
 }
 
 export function CourseHeader({
   title,
   progress,
+  duration,
 }: CourseHeaderProps) {
   return (
     <div className="space-y-5">
@@ -31,9 +33,11 @@ export function CourseHeader({
           {title}
         </h1>
 
-        <p className="mt-2 text-muted-foreground">
-          {progress}% Completed
-        </p>
+        <div className="mt-2 flex items-center gap-4 text-muted-foreground">
+          <span>{progress}% Completed</span>
+          <span>•</span>
+          <span>{duration}</span>
+        </div>
 
         <Progress
           value={progress}

@@ -33,7 +33,8 @@ export function CoursePlayer({
     typeof setInterval
   > | null>(null);
 
-  const lastSavedTime = useRef(0);
+  const lastReportedTime = useRef(0);
+  const previousCurrentTime = useRef(0);
 
   const opts: YouTubeProps["opts"] = {
     width: "100%",
@@ -55,32 +56,45 @@ export function CoursePlayer({
     timerRef.current = null;
   };
 
-  const startTracking = () => {
-    if (timerRef.current) return;
+const startTracking = () => {
+  if (timerRef.current) return;
 
-    timerRef.current = setInterval(() => {
-      if (!playerRef.current) return;
+  timerRef.current = setInterval(() => {
+    if (!playerRef.current) return;
 
-      const currentTime =
-        playerRef.current.getCurrentTime();
+    const currentTime =
+      playerRef.current.getCurrentTime();
 
-      const duration =
-        playerRef.current.getDuration();
+    const duration =
+      playerRef.current.getDuration();
 
-      if (
-        currentTime - lastSavedTime.current >= 5
-      ) {
-        onProgress(
-          currentTime,
-          duration,
-          lastSavedTime.current,
-          currentTime
-        );
+    const jump = Math.abs(
+      currentTime - previousCurrentTime.current
+    );
 
-        lastSavedTime.current = currentTime;
-      }
-    }, 2000);
-  };
+    // User probably seeked
+    if (jump > 10) {
+      previousCurrentTime.current = currentTime;
+      lastReportedTime.current = currentTime;
+      return;
+    }
+
+    if (
+      currentTime - lastReportedTime.current >= 5
+    ) {
+      onProgress(
+        currentTime,
+        duration,
+        lastReportedTime.current,
+        currentTime
+      );
+
+      lastReportedTime.current = currentTime;
+    }
+
+    previousCurrentTime.current = currentTime;
+  }, 1000);
+};
 
   const handleReady = (
     event: YouTubeEvent
@@ -89,7 +103,8 @@ export function CoursePlayer({
 
     if (resumeTime && resumeTime > 5) {
       event.target.seekTo(resumeTime, true);
-      lastSavedTime.current = resumeTime;
+  lastReportedTime.current = resumeTime;
+  previousCurrentTime.current = resumeTime;
     }
   };
 
@@ -115,7 +130,8 @@ export function CoursePlayer({
 
   useEffect(() => {
     playerRef.current = null;
-    lastSavedTime.current = 0;
+  lastReportedTime.current = 0;
+  previousCurrentTime.current = 0;
     stopTracking();
   }, [videoId]);
 

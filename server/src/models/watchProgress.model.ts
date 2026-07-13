@@ -35,6 +35,11 @@ const watchProgressSchema = new Schema(
       default: 0,
     },
 
+    expectedNextSecond: {
+      type: Number,
+      default: 0,
+    },
+
     watchedSegments: {
       type: [watchedSegmentSchema],
       default: [],

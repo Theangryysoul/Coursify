@@ -1,42 +1,121 @@
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
+import { useCourses } from "@/hooks/course/useCourses";
+
 export function ContinueLearning() {
+  const { data: courses, isPending } = useCourses();
+
+  if (isPending) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">
+          Continue Learning
+        </h2>
+
+        <div className="h-72 animate-pulse rounded-3xl bg-muted" />
+      </section>
+    );
+  }
+
+  const course = courses?.find(
+    (course) =>
+      course.progress < 100 &&
+      !course.archived
+  );
+
+    if (!course) {
+      return (
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">
+            Continue Learning
+          </h2>
+
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 bg-card/40 py-20 text-center">
+            <h3 className="text-xl font-semibold">
+              No courses yet 📚
+            </h3>
+
+            <p className="mt-2 max-w-md text-muted-foreground">
+              Import your first YouTube playlist or video
+              and start learning distraction-free.
+            </p>
+
+            <Button
+              asChild
+              className="mt-6 rounded-xl"
+            >
+              <Link to="/import">
+                Import Course
+              </Link>
+            </Button>
+          </div>
+        </section>
+      );
+    }
+
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-bold">Continue Learning</h2>
+      <h2 className="text-2xl font-bold">
+        Continue Learning
+      </h2>
 
-      <div className="bg-card border-border overflow-hidden rounded-3xl border backdrop-blur-md">
-        <div className="grid md:grid-cols-[280px_1fr]">
-          <div className="flex h-52 items-center justify-center bg-gradient-to-br from-blue-600/20 to-violet-600/20">
-            <PlayCircle className="h-16 w-16 text-violet-400" />
-          </div>
+      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl">
+        <div className="grid md:grid-cols-[320px_1fr]">
+          <Link
+            to={`/courses/${course.course._id}`} >
+          <img
+            src={course.course.thumbnail}
+            alt={course.course.title}
+            className="h-full w-full object-cover"
+          />  
+          </Link>
+          
+          
 
-          <div className="space-y-6 p-6">
+          <div className="flex flex-col justify-between p-8">
             <div>
-              <p className="text-muted-foreground text-sm">Playlist</p>
+              <p className="text-sm text-muted-foreground">
+                {course.course.totalVideos} Videos
+              </p>
 
-              <h3 className="mt-2 text-2xl font-semibold">
-                MERN Backend Bootcamp
+              <h3 className="mt-2 text-3xl font-bold">
+                {course.course.title}
               </h3>
 
-              <p className="text-muted-foreground mt-2">
-                Authentication • Video 14
+              <p className="mt-3 text-muted-foreground">
+                Continue where you left off.
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Progress value={72} />
+            <div className="mt-8 space-y-3">
+              <Progress value={course.progress} />
 
-              <p className="text-muted-foreground text-sm">72% completed</p>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {course.progress}% completed
+                </span>
+
+                <span>
+                  {course.status}
+                </span>
+              </div>
+
+              <Button
+                asChild
+                className="mt-3 gap-2"
+              >
+                <Link
+                  to={`/courses/${course.course._id}`}
+                >
+                  Continue Learning
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-
-            <Button className="gap-2">
-              Continue Watching
-              <ArrowRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

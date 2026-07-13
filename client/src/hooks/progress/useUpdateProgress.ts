@@ -1,8 +1,13 @@
-import { useMutation } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { updateProgress } from "@/api/progress.api";
 
 export function useUpdateProgress() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       videoId,
@@ -17,5 +22,19 @@ export function useUpdateProgress() {
         videoId,
         data
       ),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["courses"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["learning-stats"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["course-details"],
+      });
+    },
   });
 }

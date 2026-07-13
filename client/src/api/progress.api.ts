@@ -11,6 +11,14 @@ export interface ResumeResponse {
   }[];
 }
 
+export interface LearningStatsResponse {
+  totalCourses: number;
+  completedVideos: number;
+  totalWatchTime: number;
+  formattedWatchTime: string;
+  streak: number;
+}
+
 export interface UpdateProgressRequest {
   currentTime: number;
   duration: number;
@@ -26,6 +34,15 @@ export const getResume = async (
   const response =
     await api.get<ApiResponse<ResumeResponse>>(
       `/progress/${videoId}`
+    );
+
+  return response.data.data;
+};
+
+export const getLearningStats = async () => {
+  const response =
+    await api.get<ApiResponse<LearningStatsResponse>>(
+      "/progress/stats"
     );
 
   return response.data.data;

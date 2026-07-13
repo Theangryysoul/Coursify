@@ -18,28 +18,33 @@ export default function CourseDetailsPage() {
   );
 
   const [currentVideo, setCurrentVideo] = useState(0);
-
+  
   useEffect(() => {
     if (data?.videos.length) {
       setCurrentVideo(0);
     }
   }, [data]);
-
+  
   const activeVideo = data?.videos[currentVideo];
-
+  
+    const { data: resume } = useResume(
+    activeVideo?.videoId ?? ""
+  );
   const activeLectureRef =
   useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-  activeLectureRef.current?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-}, [currentVideo]);
+    if (!data?.resume) return;
 
-  const { data: resume } = useResume(
-    activeVideo?.videoId ?? ""
-  );
+    const index = data.videos.findIndex(
+      (video) =>
+        video._id === data.resume?.videoId
+    );
+
+    if (index !== -1) {
+      setCurrentVideo(index);
+    }
+  }, [data]);
 
   const updateProgress = useUpdateProgress();
 
@@ -56,7 +61,7 @@ export default function CourseDetailsPage() {
     if (updateProgress.isPending) return;
 
     updateProgress.mutate({
-      videoId: activeVideo.videoId,
+      videoId: activeVideo.duration,
       data: {
         currentTime,
         duration,
@@ -108,10 +113,11 @@ export default function CourseDetailsPage() {
       <CourseHeader
         title={data.userCourse.course.title}
         progress={data.progress}
+        duration={activeVideo.duration}
       />
 
       <CoursePlayer
-        videoId={activeVideo.videoId}
+        videoId={activeVideo.duration}
         title={activeVideo.title}
         resumeTime={resume?.currentTime}
         onProgress={handleProgress}

@@ -5,9 +5,8 @@ import { RecentCourses } from "@/components/dashboard/RecentCourses";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10">
       <DashboardHeader />
-
       <StatsGrid />
       <ContinueLearning />
       <RecentCourses />

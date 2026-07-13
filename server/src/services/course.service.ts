@@ -2,6 +2,7 @@ import UserCourse from "../models/userCourse.model.js";
 import Video from "../models/video.model.js";
 import { NotFoundError } from "../utils/errors.js";
 import { calculateCourseProgress } from "./progress.service.js";
+import WatchProgress from "../models/watchProgress.model.js";
 
 export const getMyCourses = async (userId: string) => {
   const userCourses = await UserCourse.find({
@@ -45,18 +46,59 @@ export const getCourseById = async (
 
   const videos = await Video.find({
     course: courseId,
-  }).sort({
-    position: 1,
+  })
+    .sort({
+      position: 1,
+    })
+    .lean();
+
+  const progresses = await WatchProgress.find({
+    userCourse: userCourse._id,
+  }).lean();
+
+  const progressMap = new Map(
+    progresses.map((progress) => [
+      progress.video.toString(),
+      progress,
+    ])
+  );
+
+  const enrichedVideos = videos.map((video) => {
+    const progress = progressMap.get(
+      video._id.toString()
+    );
+
+    return {
+      ...video,
+      completed: progress?.completed ?? false,
+      currentTime: progress?.currentTime ?? 0,
+    };
   });
 
   const progress = await calculateCourseProgress(
   userCourse._id.toString()
   );
 
+  const lastProgress = await WatchProgress.findOne({
+    userCourse: userCourse._id,
+  })
+    .sort({
+      lastWatchedAt: -1,
+    })
+    .lean();
+
   return {
     userCourse,
     progress,
-    videos,
+    videos: enrichedVideos,
+
+    resume: lastProgress
+      ? {
+          videoId: lastProgress.video.toString(),
+          currentTime:
+            lastProgress.currentTime,
+        }
+      : null,
   };
 };
 
