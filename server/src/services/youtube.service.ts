@@ -206,7 +206,30 @@ const importPlaylist = async (
     videos.map((v) => v.videoId)
   );
 
-  const completeVideos = mergeVideoDetails(videos, details);
+const completeVideos = mergeVideoDetails(
+  videos,
+  details
+).filter((video) => {
+  if (!video.thumbnail || !video.duration) {
+    console.log(
+      "Skipping unavailable video:",
+      video.title
+    );
+    return false;
+  }
+
+  return true;
+});
+
+console.log(
+  "Playlist videos:",
+  videos.length
+);
+
+console.log(
+  "Imported videos:",
+  completeVideos.length
+);
 
   course = await Course.create({
     type: "playlist",
@@ -216,7 +239,7 @@ const importPlaylist = async (
     channelName: metadata.channelName,
     playlistId: metadata.playlistId,
     playlistUrl: url,
-    videoCount: metadata.videoCount,
+    videoCount: completeVideos.length,
     totalDuration: calculateTotalDuration(completeVideos),
   });
 
@@ -305,21 +328,28 @@ const importSingleVideo = async (
   });
 };
 
-export const calculateTotalDuration = (videos: { duration: string }[]) => {
+export const calculateTotalDuration = (
+  videos: { duration?: string | null }[]
+) => {
   let totalSeconds = 0;
 
   for (const video of videos) {
+    if (!video.duration) continue;
+
     const match = video.duration.match(
       /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
     );
 
     if (!match) continue;
 
-    const hours = Number(match[1] || 0);
-    const minutes = Number(match[2] || 0);
-    const seconds = Number(match[3] || 0);
+    const hours = Number(match[1] ?? 0);
+    const minutes = Number(match[2] ?? 0);
+    const seconds = Number(match[3] ?? 0);
 
-    totalSeconds += hours * 3600 + minutes * 60 + seconds;
+    totalSeconds +=
+      hours * 3600 +
+      minutes * 60 +
+      seconds;
   }
 
   return totalSeconds;

@@ -4,6 +4,8 @@ import {
   getLearningStatsController,
   getResumeController,
   updateProgressController,
+  toggleCompletedController,
+  getHeatmapController,
 } from "../controllers/progress.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { updateProgressSchema } from "../validators/progress.validator.js";
@@ -18,6 +20,12 @@ router.get(
 );
 
 router.get(
+  "/heatmap",
+  authenticate,
+  getHeatmapController
+);
+
+router.get(
   "/:videoId",
   authenticate,
   getResumeController
@@ -28,6 +36,12 @@ router.patch(
   authenticate,
   validate(updateProgressSchema),
   updateProgressController
+);
+
+router.patch(
+  "/:videoId/toggle",
+  authenticate,
+  toggleCompletedController
 );
 
 export default router;

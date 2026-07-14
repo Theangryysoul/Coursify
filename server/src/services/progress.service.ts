@@ -203,43 +203,49 @@ export const updateProgress = async (
     });
   }
 
-  const segmentLength =
+const segmentLength =
   data.segment.end - data.segment.start;
 
-  // Reject impossible segments
-  if (
-    segmentLength <= 0 ||
-    segmentLength > 8
-  ) 
-  {
-    return progress;
-  }
-  const tolerance = 3;
+// Reject impossible segments
+if (
+  segmentLength <= 0 ||
+  segmentLength > 8
+) {
+  return progress;
+}
 
-// Ignore large forward seeks for progress counting,
-// but still keep the course "recently interacted".
-  if (
-    Math.abs(
-      data.segment.start -
-        progress.expectedNextSecond
-    ) > tolerance
-  ) {
-    progress.currentTime = data.currentTime;
-    progress.lastWatchedAt = new Date();
+const tolerance = 10;
 
-    await progress.save();
+const diff =
+  data.segment.start -
+  progress.expectedNextSecond;
 
-    await UserCourse.findByIdAndUpdate(
-      userCourse._id,
-      {
-        $currentDate: {
-          updatedAt: true,
-        },
-      }
-    );
+// User jumped forward more than 10s.
+// Don't count skipped part, but resume tracking
+// from the new position.
+if (
+  !progress.completed &&
+  diff > tolerance
+) {
+  progress.currentTime = data.currentTime;
+  progress.expectedNextSecond =
+    data.segment.start;
+  progress.lastWatchedAt = new Date();
 
-    return progress;
-  }
+  await progress.save();
+  
+
+  await UserCourse.findByIdAndUpdate(
+    userCourse._id,
+    {
+      $currentDate: {
+        updatedAt: true,
+      },
+    }
+  );
+
+  return progress;
+}
 
     const mergedSegments = mergeSegments([
     ...progress.watchedSegments,
@@ -249,12 +255,22 @@ export const updateProgress = async (
   const uniqueSeconds =
     calculateUniqueSeconds(mergedSegments);
 
-    progress.currentTime = data.currentTime;
-    progress.expectedNextSecond =
-      data.segment.end;
-    progress.watchedSegments = mergedSegments as any;
-    progress.uniqueWatchedSeconds = uniqueSeconds;
-    progress.lastWatchedAt = new Date();
+const previousUniqueSeconds =
+  progress.uniqueWatchedSeconds;
+
+  const newlyWatched =
+    uniqueSeconds -
+    previousUniqueSeconds;
+
+  progress.currentTime = data.currentTime;
+  progress.expectedNextSecond =
+    data.segment.end;
+  progress.watchedSegments =
+    mergedSegments as any;
+  progress.uniqueWatchedSeconds =
+    uniqueSeconds;
+  progress.lastWatchedAt =
+    new Date();
 
     const wasCompleted = progress.completed;
 
@@ -263,9 +279,19 @@ export const updateProgress = async (
 
     if (!wasCompleted && progress.completed) {
       progress.currentTime = data.duration;
+
+      // Reset so replay starts from beginning
+      progress.expectedNextSecond = 0;
     }
 
       await progress.save();
+
+    if (newlyWatched > 0) {
+      await updateStudySession(
+        userId,
+        newlyWatched
+      );
+    }
 
       await UserCourse.findByIdAndUpdate(
         userCourse._id,
@@ -302,6 +328,68 @@ export const updateProgress = async (
     );
 
     return progress;
+};
+
+export const toggleCompleted = async (
+  userId: string,
+  youtubeVideoId: string
+) => {
+  const video = await Video.findOne({
+    videoId: youtubeVideoId,
+  });
+
+  if (!video) {
+    throw new NotFoundError("Video not found");
+  }
+
+  const userCourse = await UserCourse.findOne({
+    owner: userId,
+    course: video.course,
+  });
+
+  if (!userCourse) {
+    throw new NotFoundError("Course not found");
+  }
+
+  let progress = await WatchProgress.findOne({
+    userCourse: userCourse._id,
+    video: video._id,
+  });
+
+  if (!progress) {
+    progress = await WatchProgress.create({
+      userCourse: userCourse._id,
+      video: video._id,
+    });
+  }
+
+  progress.completed = !progress.completed;
+
+  await progress.save();
+
+  const totalVideos = await Video.countDocuments({
+    course: video.course,
+  });
+
+  const completedVideos =
+    await WatchProgress.countDocuments({
+      userCourse: userCourse._id,
+      completed: true,
+    });
+
+  await UserCourse.findByIdAndUpdate(
+    userCourse._id,
+    {
+      status:
+        completedVideos === 0
+          ? "Not Started"
+          : completedVideos === totalVideos
+          ? "Completed"
+          : "In Progress",
+    }
+  );
+
+  return progress;
 };
 
 export const getLearningStats = async (
@@ -354,7 +442,65 @@ export const getLearningStats = async (
   };
 };
 
+export const getHeatmapData = async (
+  userId: string
+) => {
+  const today = new Date();
 
+  const start = new Date(today);
+  start.setDate(today.getDate() - 364);
+
+  const sessions = await StudySession.find({
+    user: userId,
+    date: {
+      $gte: start
+        .toISOString()
+        .split("T")[0],
+    },
+  }).lean();
+
+  const sessionMap = new Map(
+    sessions.map((session) => [
+      session.date,
+      session.watchedSeconds,
+    ])
+  );
+
+  const data = [];
+
+  for (
+    let d = new Date(start);
+    d <= today;
+    d.setDate(d.getDate() + 1)
+  ) {
+    const date = d
+      .toISOString()
+      .split("T")[0];
+
+    const seconds =
+      sessionMap.get(date) ?? 0;
+
+    let level = 0;
+
+    if (seconds >= 3 * 3600) {
+      level = 4;
+    } else if (seconds >= 2 * 3600) {
+      level = 3;
+    } else if (seconds >= 3600) {
+      level = 2;
+    } else if (seconds > 0) {
+      level = 1;
+    }
+
+    data.push({
+      date,
+      watchedSeconds: seconds,
+      level,
+    });
+  }
+
+  return data;
+};
 
 export const calculateStudyStreak = async (
   userId: string

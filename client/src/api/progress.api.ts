@@ -19,6 +19,12 @@ export interface LearningStatsResponse {
   streak: number;
 }
 
+export interface HeatmapDay {
+  date: string;
+  watchedSeconds: number;
+  level: number;
+}
+
 export interface UpdateProgressRequest {
   currentTime: number;
   duration: number;
@@ -48,6 +54,15 @@ export const getLearningStats = async () => {
   return response.data.data;
 };
 
+export const getHeatmap = async () => {
+  const response =
+    await api.get<
+      ApiResponse<HeatmapDay[]>
+    >("/progress/heatmap");
+
+  return response.data.data;
+};
+
 export const updateProgress = async (
   videoId: string,
   data: UpdateProgressRequest
@@ -57,6 +72,16 @@ export const updateProgress = async (
       `/progress/${videoId}`,
       data
     );
+
+  return response.data.data;
+};
+
+export const toggleCompleted = async (
+  videoId: string
+) => {
+  const response = await api.patch(
+    `/progress/${videoId}/toggle`
+  );
 
   return response.data.data;
 };
