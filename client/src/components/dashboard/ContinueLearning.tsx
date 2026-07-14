@@ -23,7 +23,7 @@ export function ContinueLearning() {
 
   const course = courses?.find(
     (course) =>
-      course.progress < 100 &&
+      course.progress.percentage < 100 &&
       !course.archived
   );
 
@@ -92,11 +92,11 @@ export function ContinueLearning() {
             </div>
 
             <div className="mt-8 space-y-3">
-              <Progress value={course.progress} />
+              <Progress value={course.progress.percentage} />
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>
-                  {course.progress}% completed
+                  {course.progress.percentage}% completed
                 </span>
 
                 <span>

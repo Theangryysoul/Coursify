@@ -41,10 +41,14 @@ export function CourseCard({
           </div>
         </div>
 
-        <Progress value={course.progress} />
+        <Progress
+          value={course.progress.percentage}
+        />
 
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{course.progress}% completed</span>
+          <span>
+            {course.progress.percentage}% completed
+          </span>
 
           <span>{course.status}</span>
         </div>

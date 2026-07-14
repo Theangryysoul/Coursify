@@ -38,8 +38,3 @@ export const refresh = async () => {
   return response.data.data;
 };
 
-export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get<ApiResponse<User>>("/users/me");
-
-  return response.data.data;
-};

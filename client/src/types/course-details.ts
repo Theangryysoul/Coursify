@@ -15,7 +15,11 @@ export interface Video {
 
 export interface CourseDetails {
   userCourse: CourseItem;
-  progress: number;
+  progress: {
+  percentage: number;
+  watchedDuration: number;
+  totalDuration: number;
+};
   videos: Video[];
 
   resume: {

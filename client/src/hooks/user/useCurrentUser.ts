@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getCurrentUser } from "@/api/auth.api";
+import { getCurrentUser } from "@/api/user.api";
 import type { User } from "@/types/user";
 
 export function useCurrentUser(enabled: boolean) {

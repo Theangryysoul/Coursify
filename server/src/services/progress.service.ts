@@ -84,14 +84,18 @@ export const calculateCourseProgress = async (
   ).populate("course");
 
   if (!userCourse) {
-    return 0;
+    return {
+      percentage: 0,
+      watchedDuration: 0,
+      totalDuration: 0,
+    };
   }
 
   const progresses = await WatchProgress.find({
     userCourse: userCourseId,
   });
 
-  const watchedSeconds = progresses.reduce(
+  const watchedDuration = progresses.reduce(
     (total, progress) =>
       total + progress.uniqueWatchedSeconds,
     0
@@ -102,15 +106,25 @@ export const calculateCourseProgress = async (
   ).totalDuration;
 
   if (!totalDuration) {
-    return 0;
+    return {
+      percentage: 0,
+      watchedDuration,
+      totalDuration: 0,
+    };
   }
 
-  return Math.min(
-    100,
-    Math.round(
-      (watchedSeconds / totalDuration) * 100
-    )
-  );
+  return {
+    percentage: Math.min(
+      100,
+      Math.round(
+        (watchedDuration /
+          totalDuration) *
+          100
+      )
+    ),
+    watchedDuration,
+    totalDuration,
+  };
 };
 
 const updateStudySession = async (

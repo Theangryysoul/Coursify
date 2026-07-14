@@ -6,7 +6,11 @@ export interface CourseItem {
   archived: boolean;
   status: string;
 
-  progress: number;
+  progress: {
+  percentage: number;
+  watchedDuration: number;
+  totalDuration: number;
+};
 
   course: {
     _id: string;

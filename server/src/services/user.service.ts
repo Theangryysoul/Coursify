@@ -36,6 +36,32 @@ export const updateAvatar = async (
   return user;
 };
 
+export const removeAvatar = async (
+  userId: string
+) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      avatar: {
+        url: "",
+        publicId: "",
+      },
+      $currentDate: {
+        updatedAt: true,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  return user;
+};
+
 export const updateProfile = async (
   userId: string,
   data: {

@@ -10,29 +10,19 @@ import { CourseHeader } from "@/components/course/CourseHeader";
 import { CoursePlayer } from "@/components/course/CoursePlayer";
 import { LectureItem } from "@/components/course/LectureItem";
 
-const formatDuration = (duration: string) => {
-  const match = duration.match(
-    /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
-  );
+  const formatSeconds = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor(
+      (seconds % 3600) / 60
+    );
+    const secs = Math.round(seconds % 60);
 
-  if (!match) return duration;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    }
 
-  const hours = Number(match[1] ?? 0);
-  const minutes = Number(match[2] ?? 0);
-  const seconds = Number(match[3] ?? 0);
-
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(
-      2,
-      "0"
-    )}:${String(seconds).padStart(2, "0")}`;
-  }
-
-  return `${minutes}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
-};
+    return `${minutes}m ${secs}s`;
+  };
 
 export default function CourseDetailsPage() {
   const { courseId } = useParams();
@@ -140,7 +130,11 @@ export default function CourseDetailsPage() {
       <CourseHeader
         title={data.userCourse.course.title}
         progress={data.progress}
-        duration={formatDuration(activeVideo.duration)}
+        duration={`${formatSeconds(
+          data.progress.watchedDuration
+        )} / ${formatSeconds(
+          data.progress.totalDuration
+        )}`}
       />
 
       <CoursePlayer

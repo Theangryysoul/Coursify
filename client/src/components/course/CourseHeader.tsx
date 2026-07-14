@@ -6,7 +6,11 @@ import { Progress } from "@/components/ui/progress";
 
 interface CourseHeaderProps {
   title: string;
-  progress: number;
+  progress: {
+    percentage: number;
+    watchedDuration: number;
+    totalDuration: number;
+  };
   duration: string;
 }
 
@@ -34,13 +38,13 @@ export function CourseHeader({
         </h1>
 
         <div className="mt-2 flex items-center gap-4 text-muted-foreground">
-          <span>{progress}% Completed</span>
+          <span>{progress.percentage}% Completed</span>
           <span>•</span>
           <span>{duration}</span>
         </div>
 
         <Progress
-          value={progress}
+          value={progress.percentage}
           className="mt-4"
         />
       </div>

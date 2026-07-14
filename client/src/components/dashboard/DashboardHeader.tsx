@@ -30,7 +30,11 @@ export function DashboardHeader() {
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
           {user?.avatar?.url ? (
-            <AvatarImage src={user.avatar.url} />
+            <AvatarImage src={
+              user?.avatar?.url
+                ? `${user.avatar.url}?t=${user.updatedAt}`
+                : undefined
+            } />
           ) : (
             <AvatarFallback>
               {user?.name?.charAt(0)}
@@ -77,7 +81,7 @@ export function DashboardHeader() {
       <Button
         asChild
         size="lg"
-        className="gap-2 rounded-2xl"
+        className="gap-2 rounded-2xl p-5"
       >
         <Link to="/import">
           <Plus className="h-5 w-5" />
