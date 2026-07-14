@@ -146,6 +146,7 @@ const startTracking = () => {
       <div className="aspect-video w-full">
         <div className="h-full w-full">
           <YouTube
+            key={videoId}
             videoId={videoId}
             opts={opts}
             title={title}

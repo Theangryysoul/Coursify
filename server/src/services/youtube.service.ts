@@ -169,6 +169,89 @@ export const importCourse = async (
   }
 };
 
+const syncPlaylist = async (
+  course: any,
+  playlistId: string,
+  url: string
+) => {
+  const rawMetadata =
+    await getPlaylistMetadata(playlistId);
+
+  const rawVideos =
+    await getPlaylistVideos(playlistId);
+
+  const metadata =
+    formatPlaylistMetadata(rawMetadata);
+
+  const videos: PlaylistVideo[] =
+    formatPlaylistVideos(rawVideos);
+
+  const details =
+    await getVideoDetails(
+      videos.map((v) => v.videoId)
+    );
+
+  const completeVideos =
+    mergeVideoDetails(
+      videos,
+      details
+    ).filter(
+      (video) =>
+        video.thumbnail &&
+        video.duration
+    );
+
+  const existingVideos =
+    await Video.find({
+      course: course._id,
+    }).select("videoId");
+
+  const existingIds = new Set(
+    existingVideos.map((v) => v.videoId)
+  );
+
+  const newVideos =
+    completeVideos.filter(
+      (video) =>
+        !existingIds.has(
+          video.videoId
+        )
+    );
+
+  if (newVideos.length) {
+    await Video.insertMany(
+      newVideos.map((video) => ({
+        course: course._id,
+        videoId: video.videoId,
+        youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        duration: video.duration,
+        position: video.position,
+      }))
+    );
+  }
+
+  course.title = metadata.title;
+  course.description =
+    metadata.description;
+  course.thumbnail =
+    metadata.thumbnail;
+  course.channelName =
+    metadata.channelName;
+  course.playlistUrl = url;
+  course.videoCount =
+    completeVideos.length;
+  course.totalDuration =
+    calculateTotalDuration(
+      completeVideos
+    );
+  course.lastSyncedAt =
+    new Date();
+
+  await course.save();
+};
+
 const importPlaylist = async (
   userId: string,
   url: string
@@ -180,13 +263,20 @@ const importPlaylist = async (
   });
 
   if (course) {
-    const existingUserCourse = await UserCourse.findOne({
-      owner: userId,
-      course: course._id,
-    });
+    await syncPlaylist(
+      course,
+      playlistId,
+      url
+    );
+
+    const existingUserCourse =
+      await UserCourse.findOne({
+        owner: userId,
+        course: course._id,
+      });
 
     if (existingUserCourse) {
-      throw new BadRequestError("Course already exists in your library");
+      return existingUserCourse;
     }
 
     return await UserCourse.create({

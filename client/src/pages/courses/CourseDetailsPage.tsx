@@ -44,10 +44,13 @@ export default function CourseDetailsPage() {
   const [currentVideo, setCurrentVideo] = useState(0);
   
   useEffect(() => {
-    if (data?.videos.length) {
+    if (
+      data?.videos.length &&
+      currentVideo >= data.videos.length
+    ) {
       setCurrentVideo(0);
     }
-  }, [data]);
+  }, [data?.videos.length]);
   
   const activeVideo = data?.videos[currentVideo];
   
