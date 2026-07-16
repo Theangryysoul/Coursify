@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import { RegisterUserInput, LoginUserInput } from "../types/auth.types.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
-import { BadRequestError, UnauthorizedError, } from "../utils/errors.js";
+import { BadRequestError, NotFoundError, UnauthorizedError, } from "../utils/errors.js";
 
 export const registerUser = async (userData: RegisterUserInput) => {
   const { name, email, password } = userData;
@@ -64,6 +64,45 @@ export const loginUser = async (
   };
 
 };
+
+export const changePassword =
+  async (
+    userId: string,
+    data: {
+      currentPassword: string;
+      newPassword: string;
+    }
+  ) => {
+    const user =
+      await User.findById(userId).select("+password");
+
+    if (!user) {
+      throw new NotFoundError(
+        "User not found"
+      );
+    }
+
+    const valid =
+      await bcrypt.compare(
+        data.currentPassword,
+        user.password
+      );
+
+    if (!valid) {
+      throw new UnauthorizedError(
+        "Current password is incorrect"
+      );
+    }
+
+    user.password = await bcrypt.hash(
+      data.newPassword,
+      10
+    );
+
+    await user.save();
+
+    return;
+  };
 
 export const refreshAccessToken = (
   refreshToken: string

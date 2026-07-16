@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { env } from "../config/env.js";
 import { successResponse } from "../utils/api-response.js";
-import { registerUser, loginUser, refreshAccessToken, getCurrentUserService } from "../services/auth.service.js";
+import { registerUser, loginUser, refreshAccessToken, getCurrentUserService, changePassword } from "../services/auth.service.js";
 import { UnauthorizedError } from "../utils/errors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -38,6 +38,21 @@ export const login = asyncHandler(
     })
   }
 );
+
+export const changePasswordController =
+  asyncHandler(
+    async (req, res) => {
+      await changePassword(
+        req.user.userId,
+        req.body
+      );
+
+      return successResponse(
+        res,
+        "Password changed successfully"
+      );
+    }
+  );
 
 export const refresh = asyncHandler(
   async (req, res) => {
