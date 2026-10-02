@@ -1,4 +1,9 @@
-import bcrypt from "bcrypt";
+// bcryptjs, not bcrypt: the native `bcrypt` package loads its compiled binding
+// through a dynamic `node-gyp-build` call, which Vercel's file tracer cannot
+// follow, so the binding is left out of the deployed function and the API dies
+// while loading with an opaque FUNCTION_INVOCATION_FAILED. bcryptjs is pure
+// JavaScript and produces the same `$2b$` hashes, so stored hashes keep working.
+import bcrypt from "bcryptjs";
 import { isValidObjectId } from "mongoose";
 import User from "../models/user.model.js";
 import { RegisterUserInput, LoginUserInput } from "../types/auth.types.js";
