@@ -14,11 +14,15 @@ export function getErrorMessage(error: unknown): string {
       return message;
     }
 
+    // No response at all: the browser could not reach the API.
     if (!error.response) {
       return "Unable to reach the server. Check your connection and try again.";
     }
 
-    return FALLBACK_MESSAGE;
+    // A response with no message is not one of our API errors - our error
+    // handler always sends JSON. It is a proxy or gateway failure, which in
+    // development almost always means the API server is not running.
+    return "The server is not responding. Please try again in a moment.";
   }
 
   if (error instanceof Error && error.message) {
