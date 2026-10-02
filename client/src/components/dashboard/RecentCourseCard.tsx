@@ -10,6 +10,8 @@ interface RecentCourseCardProps {
 }
 
 export function RecentCourseCard({ course }: RecentCourseCardProps) {
+  const progressPercentage = course.progress.percentage;
+
   return (
     <div className="border-border/60 bg-card/60 overflow-hidden rounded-2xl border backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-lg">
       <Link to={`/courses/${course.course._id}`}>
@@ -34,10 +36,10 @@ export function RecentCourseCard({ course }: RecentCourseCardProps) {
         <div className="space-y-2">
           <div className="text-muted-foreground flex justify-between text-sm">
             <span>Progress</span>
-            <span>{Math.round(course.progress.percentage)}%</span>
+            <span>{Math.round(progressPercentage)}%</span>
           </div>
 
-          <Progress value={course.progress.percentage} />
+          <Progress value={progressPercentage} />
         </div>
 
         <Button asChild className="w-full">
