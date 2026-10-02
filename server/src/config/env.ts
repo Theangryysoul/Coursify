@@ -3,12 +3,18 @@ import { z } from "zod";
 
 dotenv.config();
 
+// Nothing in this module may throw. On Vercel the API runs as a serverless
+// function, so an exception during import fails every request with an opaque
+// FUNCTION_INVOCATION_FAILED and no clue about the cause. Missing values are
+// collected in `configErrors` instead, and the routes answer with a readable
+// JSON error that names them (see app.ts).
 const envSchema = z.object({
   PORT: z.string().default("5000"),
 
   NODE_ENV: z
     .enum(["development", "production", "test"])
-    .default("development"),
+    .default("development")
+    .catch("development"),
 
   // Comma separated list of browser origins allowed to call the API, e.g.
   // "https://coursify.vercel.app,http://localhost:5173".
@@ -24,17 +30,17 @@ const envSchema = z.object({
         .filter(Boolean)
     ),
 
-  // Core configuration. The API cannot serve an authenticated request without
-  // these, so a missing value is a hard failure.
-  MONGODB_URI: z.string().min(1),
+  // Core configuration - the API cannot serve an authenticated request without
+  // these.
+  MONGODB_URI: z.string().default(""),
 
-  JWT_ACCESS_SECRET: z.string().min(1),
+  JWT_ACCESS_SECRET: z.string().default(""),
 
-  JWT_REFRESH_SECRET: z.string().min(1),
+  JWT_REFRESH_SECRET: z.string().default(""),
 
-  // Feature configuration. Only the avatar upload and YouTube import endpoints
-  // use these, so they default to empty: a missing third-party key must never
-  // take authentication - or the whole API - down with it.
+  // Feature configuration - only the avatar upload and YouTube import endpoints
+  // use these, so a missing third-party key must never take authentication (or
+  // the whole API) down with it.
   CLOUDINARY_CLOUD_NAME: z.string().default(""),
 
   CLOUDINARY_API_KEY: z.string().default(""),
@@ -44,30 +50,30 @@ const envSchema = z.object({
   YOUTUBE_API_KEY: z.string().default(""),
 });
 
-const parsed = envSchema.safeParse(process.env);
+const parsedEnv = envSchema.parse(process.env);
 
-// A raw ZodError here is a stack trace with no context, and on Vercel it is the
-// only clue for why every route is failing. Name the offending variables.
-if (!parsed.success) {
-  const invalid = parsed.error.issues
-    .map((issue) => issue.path.join("."))
-    .join(", ");
+const REQUIRED_KEYS = [
+  "MONGODB_URI",
+  "JWT_ACCESS_SECRET",
+  "JWT_REFRESH_SECRET",
+] as const;
 
-  throw new Error(
-    `Invalid environment configuration. Check these variables: ${invalid}`
-  );
-}
+const FEATURE_KEYS = [
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+  "YOUTUBE_API_KEY",
+] as const;
 
-const parsedEnv = parsed.data;
+/**
+ * Names of the required variables that are not set. Empty when the deployment
+ * is configured correctly. Routes refuse to run while this is non-empty.
+ */
+export const configErrors: string[] = REQUIRED_KEYS.filter(
+  (key) => !parsedEnv[key]
+);
 
-const unsetFeatureKeys = (
-  [
-    "CLOUDINARY_CLOUD_NAME",
-    "CLOUDINARY_API_KEY",
-    "CLOUDINARY_API_SECRET",
-    "YOUTUBE_API_KEY",
-  ] as const
-).filter((key) => !parsedEnv[key]);
+const unsetFeatureKeys = FEATURE_KEYS.filter((key) => !parsedEnv[key]);
 
 if (unsetFeatureKeys.length > 0) {
   console.warn(
