@@ -4,6 +4,22 @@ import { env } from "./env.js";
 
 let connectionPromise: Promise<typeof mongoose> | null = null;
 
+// The application database. A connection string without a database name (a
+// bare ".../mongodb.net/") is valid, and Mongoose then silently uses its
+// default "test" database. Falling back here keeps auth data in the same
+// database in every environment.
+const DEFAULT_DATABASE_NAME = "coursify";
+
+const getDatabaseName = (uri: string): string | undefined => {
+  try {
+    return new URL(uri).pathname.replace(/^\/+/, "") || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const databaseName = getDatabaseName(env.MONGODB_URI);
+
 /**
  * Connects to MongoDB once and reuses the connection afterwards.
  *
@@ -20,6 +36,7 @@ export const connectDB = async () => {
     connectionPromise = mongoose
       .connect(env.MONGODB_URI, {
         serverSelectionTimeoutMS: 10_000,
+        ...(databaseName ? {} : { dbName: DEFAULT_DATABASE_NAME }),
       })
       .then((instance) => {
         console.log("✅ MongoDB Connected");
