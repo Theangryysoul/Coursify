@@ -19,9 +19,12 @@ import { Link } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/auth.store";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 export function UserMenu() {
   const user = useAuthStore((state) => state.user);
+
+  const logoutMutation = useLogout();
 
   return (
     <DropdownMenu>
@@ -113,9 +116,13 @@ export function UserMenu() {
 
     <DropdownMenuSeparator />
 
-    <DropdownMenuItem className="text-red-500 focus:text-red-500">
+    <DropdownMenuItem
+      className="text-red-500 focus:text-red-500"
+      disabled={logoutMutation.isPending}
+      onSelect={() => logoutMutation.mutate()}
+    >
       <LogOut className="mr-3 rounded-xl px-3 py-3 text-base h-4 w-4" />
-      Logout
+      {logoutMutation.isPending ? "Logging out..." : "Logout"}
     </DropdownMenuItem>
   </DropdownMenuContent>
     </DropdownMenu>

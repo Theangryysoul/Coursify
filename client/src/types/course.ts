@@ -10,6 +10,7 @@ export interface CourseItem {
   percentage: number;
   watchedDuration: number;
   totalDuration: number;
+  completedVideos: number;
 };
 
   course: {

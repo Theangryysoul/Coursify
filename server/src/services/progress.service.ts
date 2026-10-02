@@ -88,12 +88,19 @@ export const calculateCourseProgress = async (
       percentage: 0,
       watchedDuration: 0,
       totalDuration: 0,
+      completedVideos: 0,
     };
   }
 
   const progresses = await WatchProgress.find({
     userCourse: userCourseId,
   });
+
+  // The documents are already loaded for the watch time, so the completed
+  // count costs nothing extra and saves the course list from guessing.
+  const completedVideos = progresses.filter(
+    (progress) => progress.completed
+  ).length;
 
   const watchedDuration = progresses.reduce(
     (total, progress) =>
@@ -110,6 +117,7 @@ export const calculateCourseProgress = async (
       percentage: 0,
       watchedDuration,
       totalDuration: 0,
+      completedVideos,
     };
   }
 
@@ -124,6 +132,7 @@ export const calculateCourseProgress = async (
     ),
     watchedDuration,
     totalDuration,
+    completedVideos,
   };
 };
 

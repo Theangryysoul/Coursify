@@ -19,6 +19,7 @@ export interface CourseDetails {
   percentage: number;
   watchedDuration: number;
   totalDuration: number;
+  completedVideos: number;
 };
   videos: Video[];
 

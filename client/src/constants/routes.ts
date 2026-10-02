@@ -7,7 +7,6 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
 
   COURSES: "/courses",
-  COURSE: "/courses/:courseId",
   COURSE_DETAILS: "/courses/:courseId",
 
   IMPORT: "/import",

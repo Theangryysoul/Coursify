@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { ROUTES } from "@/constants/routes";
 
 import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -19,10 +20,15 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route
+          path={ROUTES.HOME}
+          element={<Navigate to={ROUTES.DASHBOARD} replace />}
+        />
 
-
-        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route element={<PublicRoute />}>
+          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
@@ -35,6 +41,13 @@ export default function AppRouter() {
             <Route path={ROUTES.COURSE_DETAILS} element={<CourseDetailsPage />}/>
           </Route>
         </Route>
+
+        {/* Unknown paths fall back to the dashboard, which sends signed-out
+            visitors on to the login page. */}
+        <Route
+          path="*"
+          element={<Navigate to={ROUTES.DASHBOARD} replace />}
+        />
       </Routes>
     </BrowserRouter>
   );

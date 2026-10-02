@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useLogin } from "@/hooks/auth/useLogin";
@@ -15,6 +15,7 @@ import { getErrorMessage } from "@/utils/get-error-message";
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const loginMutation = useLogin();
 
@@ -34,7 +35,14 @@ export function LoginForm() {
     loginMutation.mutate(data, {
       onSuccess: () => {
         toast.success("Login successful");
-        navigate(ROUTES.DASHBOARD);
+
+        // If the visitor was bounced here from a protected page, land them
+        // back on it instead of dropping them on the dashboard.
+        const from = (
+          location.state as { from?: { pathname?: string } } | null
+        )?.from?.pathname;
+
+        navigate(from ?? ROUTES.DASHBOARD, { replace: true });
       },
       onError: (error) => {
         toast.error(getErrorMessage(error));

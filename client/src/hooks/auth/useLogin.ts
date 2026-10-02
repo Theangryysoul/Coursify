@@ -4,15 +4,15 @@ import { login } from "@/api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
 
 export function useLogin() {
-  const setAccessToken = useAuthStore(
-    (state) => state.setAccessToken
+  const setSession = useAuthStore(
+    (state) => state.setSession
   );
 
   return useMutation({
     mutationFn: login,
 
     onSuccess: (data) => {
-      setAccessToken(data.accessToken);
+      setSession(data.user, data.accessToken);
     },
   });
 }

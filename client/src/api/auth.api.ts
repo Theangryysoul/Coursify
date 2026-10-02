@@ -2,11 +2,13 @@ import { api } from "./axios";
 
 import type { ApiResponse } from "@/types/api";
 import type {
+  ChangePasswordRequest,
   LoginRequest,
   LoginResponse,
+  RefreshResponse,
   RegisterRequest,
+  RegisterResponse,
 } from "@/types/auth";
-import type { User } from "@/types/user";
 
 export const login = async (data: LoginRequest) => {
   const response = await api.post<ApiResponse<LoginResponse>>(
@@ -18,7 +20,7 @@ export const login = async (data: LoginRequest) => {
 };
 
 export const register = async (data: RegisterRequest) => {
-  const response = await api.post<ApiResponse<User>>(
+  const response = await api.post<ApiResponse<RegisterResponse>>(
     "/auth/register",
     data
   );
@@ -31,10 +33,13 @@ export const logout = async () => {
 };
 
 export const refresh = async () => {
-  const response = await api.post<
-    ApiResponse<{ accessToken: string }>
-  >("/auth/refresh");
+  const response = await api.post<ApiResponse<RefreshResponse>>(
+    "/auth/refresh"
+  );
 
   return response.data.data;
 };
 
+export const changePassword = async (data: ChangePasswordRequest) => {
+  await api.patch("/auth/change-password", data);
+};

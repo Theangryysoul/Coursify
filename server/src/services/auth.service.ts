@@ -1,8 +1,50 @@
 import bcrypt from "bcrypt";
+import { isValidObjectId } from "mongoose";
 import User from "../models/user.model.js";
 import { RegisterUserInput, LoginUserInput } from "../types/auth.types.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 import { BadRequestError, NotFoundError, UnauthorizedError, } from "../utils/errors.js";
+
+/**
+ * Everything the client is allowed to know about a user.
+ *
+ * Never send a user document straight from Mongoose: `select: false` only
+ * affects queries, so a document returned by `User.create()` still holds the
+ * bcrypt hash in memory and would serialize it into the response.
+ */
+export interface PublicUser {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: {
+    url: string;
+    publicId: string;
+  };
+  bio?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const sanitizeUser = (user: {
+  _id: { toString(): string };
+  name: string;
+  email: string;
+  avatar?: { url?: string; publicId?: string } | null;
+  bio?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}): PublicUser => ({
+  _id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  avatar: {
+    url: user.avatar?.url ?? "",
+    publicId: user.avatar?.publicId ?? "",
+  },
+  bio: user.bio ?? "",
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
 
 export const registerUser = async (userData: RegisterUserInput) => {
   const { name, email, password } = userData;
@@ -21,7 +63,7 @@ export const registerUser = async (userData: RegisterUserInput) => {
     password: hashedPassword,
   });
 
-  return user;
+  return createSession(sanitizeUser(user), user._id.toString());
 };
 
 export const loginUser = async (
@@ -45,23 +87,7 @@ export const loginUser = async (
     throw new UnauthorizedError("Invalid email or password");
   }
 
-  const accessToken = generateAccessToken(user._id.toString());
-
-  const refreshToken = generateRefreshToken(user._id.toString());
-
-  return {
-  user: {
-    _id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    bio: user.bio,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  },
-  accessToken,
-  refreshToken,
-  };
+  return createSession(sanitizeUser(user), user._id.toString());
 
 };
 
@@ -104,34 +130,47 @@ export const changePassword =
     return;
   };
 
-export const refreshAccessToken = (
+export const refreshAccessToken = async (
   refreshToken: string
 ) => {
-  const decoded =
-    verifyRefreshToken(refreshToken);
+  let decoded;
 
-  const accessToken =
-    generateAccessToken(decoded.userId);
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch {
+    throw new UnauthorizedError(
+      "Invalid or expired refresh token"
+    );
+  }
 
-  return accessToken;
+  // The refresh token is only proof of identity; the profile is re-read so the
+  // client can restore the whole session from a page reload.
+  const user = await getCurrentUserService(decoded.userId);
+
+  return {
+    user,
+    accessToken: generateAccessToken(decoded.userId),
+  };
 };
 
 export const getCurrentUserService = async (
   userId: string
 ) => {
+  if (!isValidObjectId(userId)) {
+    throw new UnauthorizedError("Invalid session");
+  }
+
   const user = await User.findById(userId);
 
   if (!user) {
     throw new UnauthorizedError("User not found");
   }
 
-  return {
-    _id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    bio: user.bio,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
+  return sanitizeUser(user);
 };
+
+const createSession = (user: PublicUser, userId: string) => ({
+  user,
+  accessToken: generateAccessToken(userId),
+  refreshToken: generateRefreshToken(userId),
+});

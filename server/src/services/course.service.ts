@@ -21,8 +21,22 @@ export const getMyCourses = async (userId: string) => {
       userCourse._id.toString()
     );
 
+    const course = userCourse.course as any;
+
     return {
       ...userCourse.toObject(),
+
+      // The client renders "completed / total videos" per course card. The
+      // stored field is `videoCount`, so it is exposed under the names the
+      // client reads instead of leaving them undefined in the UI.
+      course: course
+        ? {
+            ...course.toObject(),
+            totalVideos: course.videoCount ?? 0,
+            completedVideos: progress.completedVideos,
+          }
+        : null,
+
       progress,
     };
   })

@@ -39,7 +39,7 @@ export function RegisterForm() {
     registerMutation.mutate(data, {
       onSuccess: () => {
         toast.success("Account created successfully");
-        navigate(ROUTES.LOGIN);
+        navigate(ROUTES.DASHBOARD, { replace: true });
       },
       onError: (error) => {
         toast.error(getErrorMessage(error));
@@ -90,6 +90,9 @@ export function RegisterForm() {
 
         <Input
           className=" h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          id="password"
+          type="password"
+          placeholder="Choose a password"
           {...register("password")}
         />
 
