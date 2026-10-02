@@ -1,8 +1,16 @@
 import app from "./app.js";
-import { env } from "./config/env.js";
-import { connectDB } from "./config/database.js";
 
+// Keep this module free of static imports besides the app itself. Anything
+// imported here is evaluated as the serverless function starts, so a single
+// failing import would kill the function before any route or error handler
+// exists - the failure Vercel reports as an opaque FUNCTION_INVOCATION_FAILED.
+// The pieces only the local server needs are imported when it actually starts.
 const startServer = async () => {
+  const [{ env }, { connectDB }] = await Promise.all([
+    import("./config/env.js"),
+    import("./config/database.js"),
+  ]);
+
   try {
     await connectDB();
   } catch {
