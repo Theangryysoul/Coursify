@@ -31,7 +31,14 @@ export function RecentCourseCard({ course }: RecentCourseCardProps) {
           </h3>
         </div>
 
-        <Progress value={course.progress.percentage} />
+        <div className="space-y-2">
+          <div className="text-muted-foreground flex justify-between text-sm">
+            <span>Progress</span>
+            <span>{Math.round(course.progress.percentage)}%</span>
+          </div>
+
+          <Progress value={course.progress.percentage} />
+        </div>
 
         <Button asChild className="w-full">
           <Link to={`/courses/${course.course._id}`}>Open Course</Link>
