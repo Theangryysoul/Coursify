@@ -128,9 +128,52 @@
     }
 }
 
+/*
+ * Responsive baseline.
+ *
+ * The app was laid out while the browser sat at 75% zoom, which hid the fact
+ * that several rows could not shrink. At 100% the guards below keep a wide
+ * child from turning the page into a horizontally scrolling document, and
+ * `clip` is used rather than `hidden` because `hidden` would make the body the
+ * scroll container and break every `position: sticky` header in the app.
+ */
+html,
+body {
+  overflow-x: clip;
+  /* Keeps mobile Safari from inflating text in landscape. */
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Media never pushes a card wider than its column. */
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
 .youtube-player,
 .youtube-player > div,
 .youtube-player iframe {
   width: 100%;
   height: 100%;
+}
+
+/*
+ * Honor the system "reduce motion" setting for the CSS-driven animations
+ * (tw-animate-css). The framer-motion animations check the same preference
+ * themselves, via `useReducedMotion`.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

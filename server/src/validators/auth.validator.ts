@@ -25,3 +25,12 @@ export const loginSchema = z.object({
 
   password: z.string().min(1, "Password is required"),
 });
+
+/**
+ * The credential is an ID token minted by Google Identity Services. It is
+ * long, but a floor here rejects an obviously empty submission before it
+ * reaches the verifier.
+ */
+export const googleLoginSchema = z.object({
+  idToken: z.string().min(20, "Missing Google credential"),
+});

@@ -24,12 +24,18 @@ import {
   type ChangePasswordSchema,
 } from "@/lib/validations/password.schema";
 import { getErrorMessage } from "@/utils/get-error-message";
+import { cn } from "@/lib/utils";
+
+// Shared sizing for every control on this page, matching the profile page so
+// the two do not drift apart: one height, one radius, one text size.
+const CONTROL_CLASS = "h-10 rounded-xl text-base";
+const BUTTON_CLASS = "h-10 rounded-xl px-6 text-base font-medium";
 
 export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h1 className="text-4xl font-bold">Settings</h1>
+        <h1 className="text-3xl font-bold sm:text-4xl">Settings</h1>
 
         <p className="text-muted-foreground mt-2">
           Manage your account and preferences.
@@ -49,7 +55,7 @@ function AccountCard() {
 
   return (
     <Card className="border-border/60 bg-card/60 rounded-3xl backdrop-blur-xl">
-      <CardHeader>
+      <CardHeader className="px-5 sm:px-6">
         <CardTitle className="text-2xl">Account</CardTitle>
 
         <CardDescription>
@@ -57,12 +63,13 @@ function AccountCard() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 px-5 sm:px-6">
         <div className="space-y-2">
           <Label htmlFor="account-name">Name</Label>
 
           <Input
             id="account-name"
+            className={CONTROL_CLASS}
             value={user?.name ?? ""}
             readOnly
             disabled
@@ -74,6 +81,7 @@ function AccountCard() {
 
           <Input
             id="account-email"
+            className={CONTROL_CLASS}
             value={user?.email ?? ""}
             readOnly
             disabled
@@ -115,21 +123,22 @@ function ChangePasswordCard() {
 
   return (
     <Card className="border-border/60 bg-card/60 rounded-3xl backdrop-blur-xl">
-      <CardHeader>
+      <CardHeader className="px-5 sm:px-6">
         <CardTitle className="text-2xl">Password</CardTitle>
 
         <CardDescription>
-          Use at least 6 characters.
+          Use at least 8 characters.
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-5 sm:px-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current password</Label>
 
             <Input
               id="currentPassword"
+              className={CONTROL_CLASS}
               type="password"
               autoComplete="current-password"
               {...register("currentPassword")}
@@ -147,6 +156,7 @@ function ChangePasswordCard() {
 
             <Input
               id="newPassword"
+              className={CONTROL_CLASS}
               type="password"
               autoComplete="new-password"
               {...register("newPassword")}
@@ -164,6 +174,7 @@ function ChangePasswordCard() {
 
             <Input
               id="confirmPassword"
+              className={CONTROL_CLASS}
               type="password"
               autoComplete="new-password"
               {...register("confirmPassword")}
@@ -178,6 +189,7 @@ function ChangePasswordCard() {
 
           <Button
             type="submit"
+            className={BUTTON_CLASS}
             disabled={changePasswordMutation.isPending}
           >
             {changePasswordMutation.isPending
@@ -209,7 +221,7 @@ function AppearanceCard() {
 
   return (
     <Card className="border-border/60 bg-card/60 rounded-3xl backdrop-blur-xl">
-      <CardHeader>
+      <CardHeader className="px-5 sm:px-6">
         <CardTitle className="text-2xl">Appearance</CardTitle>
 
         <CardDescription>
@@ -217,7 +229,7 @@ function AppearanceCard() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-5 sm:px-6">
         <div className="flex flex-wrap gap-3">
           {THEMES.map(({ value, label, icon: Icon }) => {
             const isActive = mounted && theme === value;
@@ -227,10 +239,10 @@ function AppearanceCard() {
                 key={value}
                 type="button"
                 variant={isActive ? "default" : "outline"}
-                className="h-11 rounded-xl px-5"
+                className={cn(BUTTON_CLASS, "gap-2")}
                 onClick={() => setTheme(value)}
               >
-                <Icon className="mr-2 h-4 w-4" />
+                <Icon className="h-4 w-4" />
                 {label}
               </Button>
             );
@@ -246,7 +258,7 @@ function SessionCard() {
 
   return (
     <Card className="border-border/60 bg-card/60 rounded-3xl backdrop-blur-xl">
-      <CardHeader>
+      <CardHeader className="px-5 sm:px-6">
         <CardTitle className="text-2xl">Session</CardTitle>
 
         <CardDescription>
@@ -254,14 +266,15 @@ function SessionCard() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-5 sm:px-6">
         <Button
           type="button"
           variant="destructive"
+          className={cn(BUTTON_CLASS, "gap-2")}
           disabled={logoutMutation.isPending}
           onClick={() => logoutMutation.mutate()}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="h-4 w-4" />
           {logoutMutation.isPending ? "Logging out..." : "Log out"}
         </Button>
       </CardContent>

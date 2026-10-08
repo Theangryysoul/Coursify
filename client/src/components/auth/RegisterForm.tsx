@@ -13,6 +13,7 @@ import { useRegister } from "@/hooks/auth/useRegister";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 import { ROUTES } from "@/constants/routes";
 import { getErrorMessage } from "@/utils/get-error-message";
@@ -112,6 +113,8 @@ export function RegisterForm() {
           ? "Creating account..."
           : "Create Account"}
       </Button>
+
+      <GoogleSignInButton />
 
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{" "}

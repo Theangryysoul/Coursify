@@ -66,11 +66,12 @@ export function RecentCourses() {
         Recent Courses
       </h2>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {recentCourses.map((course) => (
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {recentCourses.map((course, index) => (
           <RecentCourseCard
             key={course._id}
             course={course}
+            index={index}
           />
         ))}
       </div>

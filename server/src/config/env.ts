@@ -48,6 +48,11 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().default(""),
 
   YOUTUBE_API_KEY: z.string().default(""),
+
+  // The OAuth client id the browser uses with Google Identity Services. The
+  // same value is the audience the ID token is verified against, so it must
+  // match the client exactly or every Google sign-in is rejected.
+  GOOGLE_CLIENT_ID: z.string().default(""),
 });
 
 const parsedEnv = envSchema.parse(process.env);
@@ -63,6 +68,7 @@ const FEATURE_KEYS = [
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
   "YOUTUBE_API_KEY",
+  "GOOGLE_CLIENT_ID",
 ] as const;
 
 /**
@@ -79,7 +85,7 @@ if (unsetFeatureKeys.length > 0) {
   console.warn(
     `⚠️  Missing feature environment variables: ${unsetFeatureKeys.join(
       ", "
-    )}. Avatar upload and YouTube import will not work.`
+    )}. Avatar upload, YouTube import and Google sign-in will not work.`
   );
 }
 

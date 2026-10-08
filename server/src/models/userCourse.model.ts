@@ -14,6 +14,15 @@ const userCourseSchema = new Schema(
       required: true,
     },
 
+    // Which folder the course sits in. `null` means it is uncategorised, which
+    // is what every pre-existing row becomes - so no migration is needed.
+    folder: {
+      type: Schema.Types.ObjectId,
+      ref: "Folder",
+      default: null,
+      index: true,
+    },
+
     status: {
       type: String,
       enum: [

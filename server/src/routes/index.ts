@@ -4,6 +4,7 @@ import authRouter from "./auth.routes.js";
 import userRouter from "./user.routes.js";
 import youtubeRouter from "./youtube.routes.js";
 import courseRouter from "./course.routes.js";
+import folderRouter from "./folder.routes.js";
 import progressRouter from "./progress.routes.js";
 
 const router = Router();
@@ -13,6 +14,7 @@ router.use("/auth", authRouter);
 router.use("/users", userRouter);
 router.use("/youtube", youtubeRouter);
 router.use("/courses", courseRouter);
+router.use("/folders", folderRouter);
 router.use("/progress", progressRouter);
 
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { register, login, refresh, logout, changePasswordController, getCurrentUser } from "../controllers/auth.controller.js";
+import { register, login, googleLogin, refresh, logout, changePasswordController, getCurrentUser } from "../controllers/auth.controller.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { registerSchema, loginSchema } from "../validators/auth.validator.js";
+import { registerSchema, loginSchema, googleLoginSchema } from "../validators/auth.validator.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { changePasswordSchema } from "../validators/changePassword.validator.js";
 
@@ -17,6 +17,12 @@ authRouter.post(
   "/login",
   validate(loginSchema),
   login
+);
+
+authRouter.post(
+  "/google",
+  validate(googleLoginSchema),
+  googleLogin
 );
 
 authRouter.patch(

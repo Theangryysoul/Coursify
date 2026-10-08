@@ -28,6 +28,19 @@ export const register = async (data: RegisterRequest) => {
   return response.data.data;
 };
 
+/**
+ * Exchanges a Google ID token for a Coursify session. The token comes from
+ * Google Identity Services in the browser; the server verifies it.
+ */
+export const loginWithGoogle = async (idToken: string) => {
+  const response = await api.post<ApiResponse<LoginResponse>>(
+    "/auth/google",
+    { idToken }
+  );
+
+  return response.data.data;
+};
+
 export const logout = async () => {
   await api.post("/auth/logout");
 };

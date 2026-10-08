@@ -1,7 +1,7 @@
 import { Request, Response, type CookieOptions } from "express";
 import { env } from "../config/env.js";
 import { successResponse } from "../utils/api-response.js";
-import { registerUser, loginUser, refreshAccessToken, getCurrentUserService, changePassword } from "../services/auth.service.js";
+import { registerUser, loginUser, loginWithGoogle, refreshAccessToken, getCurrentUserService, changePassword } from "../services/auth.service.js";
 import { UnauthorizedError } from "../utils/errors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { REFRESH_TOKEN_COOKIE_NAME, REFRESH_TOKEN_MAX_AGE_MS } from "../constants/auth.js";
@@ -65,6 +65,28 @@ export const login = asyncHandler(
       user: data.user,
       accessToken: data.accessToken,
     })
+  }
+);
+
+/**
+ * Google sign-in. The client obtains an ID token from Google Identity Services
+ * and posts it here; the server verifies it and issues the same refresh cookie
+ * and access token as a password login, so everything downstream is identical.
+ */
+export const googleLogin = asyncHandler(
+  async (req, res) => {
+    const data = await loginWithGoogle(req.body.idToken);
+
+    setRefreshCookie(res, data.refreshToken);
+
+    return successResponse(
+      res,
+      "Login successful",
+      {
+        user: data.user,
+        accessToken: data.accessToken,
+      }
+    );
   }
 );
 

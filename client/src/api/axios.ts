@@ -28,12 +28,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// These endpoints must never trigger the refresh-and-retry below: a 401 from
-// them means the credentials themselves are wrong, and retrying /auth/refresh
-// would recurse into the same interceptor forever.
+// These endpoints must never trigger the refresh-and-retry below. They are the
+// ones that *establish* or *end* a session, so a 401 from any of them means the
+// credentials being presented are wrong - not that an access token went stale.
+// Letting them through would refresh with a cookie that is not there, and the
+// rejected refresh would clear the store and replace the real error message
+// ("that Google credential could not be verified") with "Unauthorized".
 const RETRY_EXCLUDED_ENDPOINTS = [
   "/auth/login",
   "/auth/register",
+  "/auth/google",
   "/auth/refresh",
   "/auth/logout",
 ];

@@ -50,21 +50,21 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col items-center pt-16">
+    <div className="mx-auto flex w-full max-w-5xl flex-col items-center pt-6 sm:pt-12 lg:pt-16">
 
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">
+      <div className="mb-8 text-center sm:mb-10">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Import YouTube Course
         </h1>
 
-        <p className="mt-3 text-muted-foreground">
+        <p className="text-muted-foreground mt-3">
           Paste any YouTube playlist or single video and
           continue learning distraction-free.
         </p>
       </div>
 
       <Card className="w-full max-w-3xl rounded-3xl border-border/60 bg-card/60 backdrop-blur-xl">
-        <CardContent className="space-y-6 p-8">
+        <CardContent className="space-y-6 p-5 sm:p-8">
 
           <div className="relative">
             <Link2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -86,7 +86,7 @@ export default function ImportPage() {
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
 
             <Button
               className="h-12 flex-1 rounded-2xl"

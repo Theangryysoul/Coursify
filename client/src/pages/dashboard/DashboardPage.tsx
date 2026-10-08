@@ -5,7 +5,7 @@ import { StudyHeatmap } from "@/components/dashboard/StudyHeatmap";
 
 export default function DashboardPage() {
   return (
-    <div className="mx-auto max-w-7xl space-y-10">
+    <div className="mx-auto max-w-7xl space-y-8 lg:space-y-10">
       <DashboardHeader />
       <StudyHeatmap />
       <ContinueLearning />

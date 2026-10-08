@@ -70,19 +70,19 @@ export function ContinueLearning() {
           <img
             src={course.course.thumbnail}
             alt={course.course.title}
-            className="h-full w-full object-cover"
-          />  
+            className="h-48 w-full object-cover md:h-full"
+          />
           </Link>
-          
-          
 
-          <div className="flex flex-col justify-between p-8">
+
+
+          <div className="flex flex-col justify-between p-6 sm:p-8">
             <div>
               <p className="text-sm text-muted-foreground">
                 {course.course.totalVideos} Videos
               </p>
 
-              <h3 className="mt-2 text-3xl font-bold">
+              <h3 className="mt-2 text-2xl font-bold sm:text-3xl">
                 {course.course.title}
               </h3>
 

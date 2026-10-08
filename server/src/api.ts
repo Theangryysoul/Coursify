@@ -63,12 +63,21 @@ app.use("/api/v1", (_req, res, next) => {
 
 // A function instance can serve its first request without a database
 // connection, so make sure one exists before any API route runs.
-app.use("/api/v1", async (_req, _res, next) => {
+app.use("/api/v1", async (_req, res, next) => {
   try {
     await connectDB();
     next();
-  } catch (error) {
-    next(error);
+  } catch {
+    // Passed to the error handler, the driver's own message reaches the
+    // browser verbatim — "querySrv ECONNREFUSED _mongodb._tcp.<cluster>..." —
+    // which names our infrastructure and leaves the visitor nothing to act on.
+    // connectDB has already logged the real cause to the server console, so
+    // answer with something a person can respond to.
+    res.status(503).json({
+      success: false,
+      message:
+        "The server cannot reach its database right now. Please try again in a moment.",
+    });
   }
 });
 

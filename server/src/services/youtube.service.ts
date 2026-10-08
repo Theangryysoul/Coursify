@@ -5,6 +5,197 @@ import Video from "../models/video.model.js";
 import UserCourse from "../models/userCourse.model.js";
 import { BadRequestError } from "../utils/errors.js";
 
+const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
+
+/**
+ * One API key is a single point of failure: when it exhausts its daily quota
+ * every import for every user fails until midnight Pacific. Supporting a
+ * comma-separated list in YOUTUBE_API_KEY lets a deployment carry spares, and
+ * the rotator below moves to the next key the moment one reports quotaExceeded.
+ */
+const apiKeys = env.YOUTUBE_API_KEY
+  .split(",")
+  .map((key) => key.trim())
+  .filter(Boolean);
+
+if (apiKeys.length === 0) {
+  console.warn(
+    "⚠️  YOUTUBE_API_KEY is not set. Previewing and importing courses will fail."
+  );
+}
+
+let activeKeyIndex = 0;
+
+const currentKey = () => apiKeys[activeKeyIndex % apiKeys.length];
+
+/**
+ * Advances to the next key. Returns false when there is only one key, which
+ * means the caller must surface the quota error instead of retrying forever.
+ */
+const rotateKey = () => {
+  if (apiKeys.length < 2) {
+    return false;
+  }
+
+  activeKeyIndex = (activeKeyIndex + 1) % apiKeys.length;
+
+  return true;
+};
+
+// The YouTube Data API charges 1 unit per list call but up to 100 per search,
+// and a playlist import fans out into several calls. Repeating the same import
+// is by far the easiest way to burn through the daily quota, so every response
+// is cached for a while: a playlist's metadata and video list rarely change
+// within a session.
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+// How long an existing course is trusted before an import re-reads the
+// playlist from YouTube.
+const RESYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+type CacheEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const responseCache = new Map<string, CacheEntry>();
+
+/**
+ * Same-endpoint requests issued in the same instant (two tabs importing the
+ * same playlist) share one upstream call instead of racing.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
+
+const isQuotaError = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+
+  if (status !== 403) {
+    return false;
+  }
+
+  const reason = (
+    error.response?.data as { error?: { errors?: { reason?: string }[] } }
+  )?.error?.errors?.[0]?.reason;
+
+  return reason === "quotaExceeded" || reason === "dailyLimitExceeded";
+};
+
+const shouldRetry = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+
+  // Rate limited / server-side hiccup / no response at all - all worth one
+  // more try. A 4xx that is not 429 is a bad request and will not improve.
+  return (
+    status === undefined ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+};
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+type YoutubeRequestOptions = {
+  /** How long the response may be reused. Pass 0 to always hit the network. */
+  ttlMs?: number;
+};
+
+/**
+ * The single door to the YouTube Data API.
+ *
+ * Every call goes through here so that caching, de-duplication, key rotation
+ * and backoff apply uniformly - there is no way to accidentally issue an
+ * unguarded request from elsewhere in the service.
+ */
+const fetchYoutube = async <T>(
+  endpoint: string,
+  params: Record<string, string | number | undefined>,
+  { ttlMs = CACHE_TTL_MS }: YoutubeRequestOptions = {}
+): Promise<T> => {
+  if (apiKeys.length === 0) {
+    throw new BadRequestError(
+      "YouTube is not configured on this server."
+    );
+  }
+
+  // The key is deliberately excluded from the cache key: the same query should
+  // hit the cache no matter which key is currently active.
+  const cacheKey = `${endpoint}?${JSON.stringify(params)}`;
+
+  const cached = responseCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value as T;
+  }
+
+  const pending = inFlight.get(cacheKey);
+
+  if (pending) {
+    return pending as Promise<T>;
+  }
+
+  const request = (async () => {
+    const maxAttempts = 3;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const response = await axios.get<T>(`${YOUTUBE_API_BASE}/${endpoint}`, {
+          params: {
+            ...params,
+            key: currentKey(),
+          },
+          timeout: 15_000,
+        });
+
+        responseCache.set(cacheKey, {
+          expiresAt: Date.now() + ttlMs,
+          value: response.data,
+        });
+
+        return response.data;
+      } catch (error) {
+        // Rotating on quota errors is what keeps a busy deployment alive: one
+        // exhausted key must not take the whole import path down with it.
+        if (isQuotaError(error) && rotateKey()) {
+          continue;
+        }
+
+        const isLastAttempt = attempt === maxAttempts - 1;
+
+        if (isLastAttempt || !shouldRetry(error)) {
+          throw error;
+        }
+
+        // 200ms, 400ms - short enough that a user does not notice, long
+        // enough to clear a momentary rate limit.
+        await sleep(200 * 2 ** attempt);
+      }
+    }
+
+    // Unreachable: the loop either returns or throws.
+    throw new BadRequestError("YouTube request failed");
+  })();
+
+  inFlight.set(cacheKey, request);
+
+  try {
+    return await request;
+  } finally {
+    inFlight.delete(cacheKey);
+  }
+};
+
 export const detectYoutubeUrlType = (url: string) => {
   const parsedUrl = new URL(url);
 
@@ -30,19 +221,12 @@ export const extractPlaylistId = (url: string) => {
 };
 
 export const getPlaylistMetadata = async (playlistId: string) => {
-  const response = await axios.get(
-    "https://www.googleapis.com/youtube/v3/playlists",
-    {
-      params: {
-        part: "snippet,contentDetails",
-        id: playlistId,
-        key: env.YOUTUBE_API_KEY,
-      },
-    }
-  );
-
-  return response.data;
+  return fetchYoutube<any>("playlists", {
+    part: "snippet,contentDetails",
+    id: playlistId,
+  });
 };
+
 
 export const formatPlaylistMetadata = (data: any) => {
   const playlist = data.items[0];
@@ -71,21 +255,18 @@ export const getPlaylistVideos = async (playlistId: string) => {
   let nextPageToken: string | undefined;
 
   do {
-    const response = await axios.get<PlaylistItemsResponse>(
-      "https://www.googleapis.com/youtube/v3/playlistItems",
+    const response = await fetchYoutube<PlaylistItemsResponse>(
+      "playlistItems",
       {
-        params: {
-          part: "snippet,contentDetails",
-          playlistId,
-          maxResults: 50,
-          pageToken: nextPageToken,
-          key: env.YOUTUBE_API_KEY,
-        },
+        part: "snippet,contentDetails",
+        playlistId,
+        maxResults: 50,
+        pageToken: nextPageToken,
       }
     );
 
-    allVideos.push(...response.data.items);
-    nextPageToken = response.data.nextPageToken;
+    allVideos.push(...response.items);
+    nextPageToken = response.nextPageToken;
   } while (nextPageToken);
 
   return {
@@ -108,18 +289,12 @@ export const getVideoDetails = async (videoIds: string[]) => {
     for (let i = 0; i < videoIds.length; i += 50) {
       const chunk = videoIds.slice(i, i + 50);
 
-      const response = await axios.get(
-        "https://www.googleapis.com/youtube/v3/videos",
-        {
-          params: {
-            part: "contentDetails",
-            id: chunk.join(","),
-            key: env.YOUTUBE_API_KEY,
-          },
-        }
-      );
+      const response = await fetchYoutube<any>("videos", {
+        part: "contentDetails",
+        id: chunk.join(","),
+      });
 
-      allItems.push(...response.data.items);
+      allItems.push(...response.items);
     }
 
     return {
@@ -174,6 +349,17 @@ const syncPlaylist = async (
   playlistId: string,
   url: string
 ) => {
+  // Re-importing a playlist that was synced minutes ago would spend quota to
+  // rediscover videos the database already holds. Reusing the recent sync is
+  // the cheapest possible win against a daily quota.
+  const lastSyncedAt = course.lastSyncedAt
+    ? new Date(course.lastSyncedAt).getTime()
+    : 0;
+
+  if (Date.now() - lastSyncedAt < RESYNC_INTERVAL_MS) {
+    return;
+  }
+
   const rawMetadata =
     await getPlaylistMetadata(playlistId);
 
@@ -299,27 +485,7 @@ const importPlaylist = async (
 const completeVideos = mergeVideoDetails(
   videos,
   details
-).filter((video) => {
-  if (!video.thumbnail || !video.duration) {
-    console.log(
-      "Skipping unavailable video:",
-      video.title
-    );
-    return false;
-  }
-
-  return true;
-});
-
-console.log(
-  "Playlist videos:",
-  videos.length
-);
-
-console.log(
-  "Imported videos:",
-  completeVideos.length
-);
+).filter((video) => Boolean(video.thumbnail && video.duration));
 
   course = await Course.create({
     type: "playlist",
@@ -467,18 +633,10 @@ export const extractVideoId = (url: string) => {
 };
 
 export const getVideoMetadata = async (videoId: string) => {
-  const response = await axios.get(
-    "https://www.googleapis.com/youtube/v3/videos",
-    {
-      params: {
-        part: "snippet,contentDetails",
-        id: videoId,
-        key: env.YOUTUBE_API_KEY,
-      },
-    }
-  );
-
-  return response.data;
+  return fetchYoutube<any>("videos", {
+    part: "snippet,contentDetails",
+    id: videoId,
+  });
 };
 
 export const formatVideoMetadata = (data: any) => {
