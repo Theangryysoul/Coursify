@@ -309,6 +309,8 @@ CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 
 YOUTUBE_API_KEY
+
+GOOGLE_CLIENT_ID
 ```
 
 Rules
@@ -330,6 +332,7 @@ CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 YOUTUBE_API_KEY
+GOOGLE_CLIENT_ID
 ```
 
 Also set
@@ -347,7 +350,31 @@ from the deployment's own origin are always allowed, so with the same-origin
 defaults to `/api/v1` on the same origin. Only set it when the API lives on a
 different domain.
 
+`VITE_GOOGLE_CLIENT_ID` is optional too. The Google button reads the client id
+from `GET /api/v1/auth/config`, which serves the server's own `GOOGLE_CLIENT_ID`
+- the value every ID token is verified against - so there is only one variable
+to configure. Set the `VITE_` copy only to save that one request at start-up,
+and if you do, keep it identical to the server's.
+
 Do not set `PORT` on Vercel; it is only used by the local server.
+
+## Google Sign-In
+
+Beyond the environment variables, the OAuth client in Google Cloud Console has
+to know where the app runs:
+
+```
+APIs & Services → Credentials → OAuth 2.0 Client IDs → <web client>
+```
+
+Add every origin the button is served from to **Authorized JavaScript origins**,
+including the production URL and, for development, `http://localhost:5173`.
+Google refuses a client id used from an origin that is not listed - the button
+appears and the popup reports an origin error - which looks like the button
+being broken rather than a configuration gap. Note the exact origin: scheme plus
+host, with no path and no trailing slash.
+
+The client id in Google Cloud Console must match `GOOGLE_CLIENT_ID` exactly.
 
 ---
 
@@ -375,6 +402,9 @@ Vercel
 - Root Directory left empty
 - `pnpm build` succeeds for both services
 - `/api/v1/health` returns `200` on the deployment URL
+- `/api/v1/auth/config` returns the production client id, not an empty string
+- The deployment origin is listed under Authorized JavaScript origins for the
+  Google OAuth client (see section 9)
 - Deep link (e.g. `/courses`) loads the app instead of `404`
 - Sign in sets the `refreshToken` cookie on the deployment domain
 

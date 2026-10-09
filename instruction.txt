@@ -1,0 +1,4 @@
+1. it best looks at 80% so make everything look a little zoom out, and after zoom out manage setting page appearance, so that it won't look wierd
+2. import and login page are not correctly optimized for mobile view
+3. a 100% zoom heatmap is not fully visible on laptop
+4. google auth is not working after deployment but working fine on localhost

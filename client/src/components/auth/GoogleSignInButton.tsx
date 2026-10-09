@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { env } from "@/config/env";
 import { ROUTES } from "@/constants/routes";
+import { useGoogleClientId } from "@/hooks/auth/useGoogleClientId";
 import { useGoogleLogin } from "@/hooks/auth/useGoogleLogin";
 import { getErrorMessage } from "@/utils/get-error-message";
 
@@ -65,13 +65,16 @@ const loadGisScript = () => {
 /**
  * Renders Google's own sign-in button via Google Identity Services.
  *
- * Renders nothing when the deployment has no client id configured, and
- * nothing if Google's script cannot be loaded - in both cases the password
- * form beside it keeps working, which is the important part.
+ * Renders nothing when the deployment has no client id configured - in the
+ * bundle or on the server - and nothing if Google's script cannot be loaded.
+ * In both cases the password form beside it keeps working, which is the
+ * important part.
  */
 export function GoogleSignInButton() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [unavailable, setUnavailable] = useState(false);
+
+  const clientId = useGoogleClientId();
 
   const googleLogin = useGoogleLogin();
 
@@ -90,7 +93,7 @@ export function GoogleSignInButton() {
   }, [location.state]);
 
   useEffect(() => {
-    if (!env.GOOGLE_CLIENT_ID) {
+    if (!clientId) {
       return;
     }
 
@@ -105,7 +108,7 @@ export function GoogleSignInButton() {
         }
 
         window.google.accounts.id.initialize({
-          client_id: env.GOOGLE_CLIENT_ID,
+          client_id: clientId,
 
           callback: ({ credential }) => {
             if (!credential) {
@@ -157,9 +160,9 @@ export function GoogleSignInButton() {
     // on every render and re-initialising GIS on each of those would re-render
     // Google's iframe over and over.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clientId]);
 
-  if (!env.GOOGLE_CLIENT_ID || unavailable) {
+  if (!clientId || unavailable) {
     return null;
   }
 

@@ -52,16 +52,18 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
       <div className="space-y-2">
         <Label className="font-medium text-zinc-200" htmlFor="email">
           Email
         </Label>
 
         <Input
-          className="h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          className="h-12 rounded-xl border-border bg-card text-base text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
           id="email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder="Enter your email"
           {...register("email")}
         />
@@ -77,9 +79,10 @@ export function LoginForm() {
         </Label>
 
         <Input
-          className="h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          className="h-12 rounded-xl border-border bg-card text-base text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
           id="password"
           type="password"
+          autoComplete="current-password"
           placeholder="Enter your password"
           {...register("password")}
         />

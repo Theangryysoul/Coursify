@@ -49,58 +49,62 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
       <div className="space-y-2">
-        <Label className="font-medium text-zinc-200"htmlFor="name">Name</Label>
+        <Label className="font-medium text-zinc-200" htmlFor="name">
+          Name
+        </Label>
 
         <Input
-          className=" h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          className="h-12 rounded-xl border-border bg-card text-base text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
           id="name"
           type="text"
+          autoComplete="name"
           placeholder="Enter your name"
           {...register("name")}
         />
 
         {errors.name && (
-          <p className="text-destructive text-sm">
-            {errors.name.message}
-          </p>
+          <p className="text-destructive text-sm">{errors.name.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label className="font-medium text-zinc-200" htmlFor="email">Email</Label>
+        <Label className="font-medium text-zinc-200" htmlFor="email">
+          Email
+        </Label>
 
         <Input
-          className=" h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          className="h-12 rounded-xl border-border bg-card text-base text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
           id="email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder="Enter your email"
           {...register("email")}
         />
 
         {errors.email && (
-          <p className="text-destructive text-sm">
-            {errors.email.message}
-          </p>
+          <p className="text-destructive text-sm">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label className="font-medium text-zinc-200" htmlFor="password">Password</Label>
+        <Label className="font-medium text-zinc-200" htmlFor="password">
+          Password
+        </Label>
 
         <Input
-          className=" h-12 rounded-xl border-border bg-card text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+          className="h-12 rounded-xl border-border bg-card text-base text-foreground placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
           id="password"
           type="password"
+          autoComplete="new-password"
           placeholder="Choose a password"
           {...register("password")}
         />
 
         {errors.password && (
-          <p className="text-destructive text-sm">
-            {errors.password.message}
-          </p>
+          <p className="text-destructive text-sm">{errors.password.message}</p>
         )}
       </div>
 
@@ -120,7 +124,8 @@ export function RegisterForm() {
         Already have an account?{" "}
         <Link
           to={ROUTES.LOGIN}
-          className=" font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+          className="font-semibold text-violet-400 transition-colors hover:text-violet-300"
+        >
           Login
         </Link>
       </p>

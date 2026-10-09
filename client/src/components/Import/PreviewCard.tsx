@@ -11,24 +11,31 @@ export function PreviewCard({ preview }: PreviewCardProps) {
   const { type, data } = preview;
 
   return (
-    <Card className="mt-8 w-full max-w-3xl overflow-hidden rounded-3xl border-border/60 bg-card/60 backdrop-blur-xl">
-      <div className="grid md:grid-cols-[400px_1fr]">
-        <div className="overflow-hidden">
+    /*
+     * `py-0` cancels the Card's own vertical padding so the thumbnail can sit
+     * flush against the top of the card on a phone - it is the first thing in
+     * the card and a ring of empty space above it just looked like a mistake.
+     * The left column is sized in rem so it scales with the interface.
+     */
+    <Card className="mt-6 w-full max-w-3xl gap-0 overflow-hidden rounded-3xl border-border/60 bg-card/60 py-0 backdrop-blur-xl sm:mt-8">
+      <div className="grid md:grid-cols-[25rem_1fr]">
+        <div className="overflow-hidden bg-muted/40">
           <img
             src={data.thumbnail}
             alt={data.title}
-            className="aspect-video rounded w-full object-cover transition duration-300 hover:scale-105 mt-3"
+            className="w-full object-cover aspect-video md:h-full md:aspect-auto"
           />
         </div>
 
-        <CardContent className="flex flex-col justify-start p-5 pt-3">
-          <h2 className="line-clamp-2 text-2xl font-bold leading-tight">
+        <CardContent className="flex flex-col justify-start p-4 pt-5 sm:p-6 sm:pt-6">
+          <h2 className="line-clamp-2 text-xl leading-tight font-bold sm:text-2xl">
             {data.title}
           </h2>
 
           <div className="mt-3">
             <span
               className="
+                inline-block
                 rounded-full
                 border
                 border-primary/20
@@ -55,33 +62,33 @@ export function PreviewCard({ preview }: PreviewCardProps) {
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-border/60 p-3">
               <div className="mb-1 flex items-center gap-2">
-                <PlayCircle className="h-4 w-4 text-primary" />
+                <PlayCircle className="h-4 w-4 shrink-0 text-primary" />
                 <span className="text-xs text-muted-foreground">
                   Videos
                 </span>
               </div>
 
-              <p className="text-xl font-bold">
+              <p className="text-lg font-bold sm:text-xl">
                 {data.videoCount}
               </p>
             </div>
 
             <div className="rounded-xl border border-border/60 p-3">
               <div className="mb-1 flex items-center gap-2">
-                <Tv className="h-4 w-4 text-primary" />
+                <Tv className="h-4 w-4 shrink-0 text-primary" />
                 <span className="text-xs text-muted-foreground">
                   Type
                 </span>
               </div>
 
-              <p className="text-xl font-bold capitalize">
+              <p className="text-lg font-bold capitalize sm:text-xl">
                 {type}
               </p>
             </div>
           </div>
 
           <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-            <Clock3 className="h-4 w-4" />
+            <Clock3 className="h-4 w-4 shrink-0" />
             <span className="text-xs">
               Total duration will be calculated after import.
             </span>

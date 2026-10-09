@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHeatmap } from "@/hooks/progress/useHeatmap";
 
 const COLORS = [
@@ -35,9 +35,51 @@ type WeekMeta = {
   label: string | null;
 };
 
-const CELL_SIZE = 14; // px, matches h-3.5 w-3.5
-const CELL_GAP = 3; // px, normal spacing between week columns
-const MONTH_GAP = 10; // px, extra spacing before the first week of a new month
+/*
+ * Sizing is derived from the space the card actually has rather than fixed at
+ * 14px cells. A year of data is around 64 columns once the month breaks are
+ * counted, which at the designed size needs roughly 1250px - more than the
+ * content area of a laptop, so the chart never fitted at 100% and had to be
+ * scrolled sideways to be read. The chart keeps its designed size when there is
+ * room and shrinks to fit when there is not.
+ *
+ * Measurements are taken in CSS pixels, which is also what the design used: it
+ * was laid out at 80% browser zoom, where a 14px cell was 11 device pixels.
+ */
+const MAX_CELL_SIZE = 14; // px, the size the chart was designed around
+const MIN_CELL_SIZE = 6; // px, below this the cells stop being readable
+const WEEKDAY_LABEL_WIDTH = 42; // px, the 34px label column plus its 8px gap
+
+// Ratios against the designed 14px cell, so gaps and label text shrink with it.
+const CELL_GAP_RATIO = 3 / 14;
+const MONTH_GAP_RATIO = 10 / 14;
+
+const layoutFor = (available: number, columns: number, monthStarts: number) => {
+  // width = columns * cell + gap * plainGaps + monthGap * monthStarts, with
+  // both gaps expressed as a fraction of the cell, which collapses to the
+  // single division below.
+  const plainGaps = Math.max(0, columns - 1 - monthStarts);
+
+  const divisor =
+    columns + (CELL_GAP_RATIO * plainGaps + MONTH_GAP_RATIO * monthStarts);
+
+  // `available` is 0 until the first measurement lands; render at the designed
+  // size for that frame rather than collapsing to the floor and back.
+  const cell =
+    available > 0 && divisor > 0
+      ? Math.min(
+          MAX_CELL_SIZE,
+          Math.max(MIN_CELL_SIZE, Math.floor(available / divisor))
+        )
+      : MAX_CELL_SIZE;
+
+  return {
+    cell,
+    gap: Math.max(2, Math.round(cell * CELL_GAP_RATIO)),
+    monthGap: Math.max(5, Math.round(cell * MONTH_GAP_RATIO)),
+    labelFont: Math.max(8, Math.round(cell * 0.78)),
+  };
+};
 
 export function StudyHeatmap() {
   const { data, isPending } = useHeatmap();
@@ -123,15 +165,46 @@ export function StudyHeatmap() {
     return { weeks, weekMeta };
   }, [data]);
 
+  // Width of the area the chart may occupy. Measured on the card's content
+  // box, which is `w-full`, so it is the space available and not the width of
+  // the (potentially wider) chart itself.
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(0);
+
+  useEffect(() => {
+    const element = chartRef.current;
+
+    if (!element) return;
+
+    const measure = () =>
+      setAvailableWidth(element.clientWidth - WEEKDAY_LABEL_WIDTH);
+
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [weeks.length]);
+
+  const monthStarts = weekMeta.filter((meta) => meta.isMonthStart).length;
+
+  const layout = useMemo(
+    () => layoutFor(availableWidth, weeks.length, monthStarts),
+    [availableWidth, weeks.length, monthStarts]
+  );
+
   if (isPending) {
     return <div className="h-48 animate-pulse rounded-3xl bg-muted" />;
   }
 
   if (!data) return null;
 
+  const { cell, gap, monthGap, labelFont } = layout;
+
   const getMarginLeft = (weekIndex: number) => {
     if (weekIndex === 0) return 0;
-    return weekMeta[weekIndex]?.isMonthStart ? MONTH_GAP : CELL_GAP;
+    return weekMeta[weekIndex]?.isMonthStart ? monthGap : gap;
   };
 
   const monthGroups = weeks.reduce<
@@ -148,27 +221,36 @@ export function StudyHeatmap() {
 
   return (
     <section className="w-full space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-2xl font-bold">Study Activity</h2>
 
         <span className="text-sm text-muted-foreground">Last 365 days</span>
       </div>
 
       <div className="w-full overflow-x-auto rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl">
-        <div className="min-w-max w-full">
+        <div ref={chartRef} className="w-full">
           {/* Month labels */}
-          <div className="mb-2 ml-[42px] flex h-4">
+          <div
+            className="flex"
+            style={{
+              marginLeft: WEEKDAY_LABEL_WIDTH,
+              marginBottom: gap + 2,
+              height: labelFont + 5,
+            }}
+          >
             {monthGroups.map((group) => (
               <div
                 key={`month-${group.start}`}
                 className="flex shrink-0 justify-center"
                 style={{
-                  width:
-                    group.span * CELL_SIZE + (group.span - 1) * CELL_GAP,
+                  width: group.span * cell + (group.span - 1) * gap,
                   marginLeft: getMarginLeft(group.start),
                 }}
               >
-                <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                <span
+                  className="text-muted-foreground whitespace-nowrap"
+                  style={{ fontSize: labelFont }}
+                >
                   {group.label}
                 </span>
               </div>
@@ -177,7 +259,10 @@ export function StudyHeatmap() {
 
           <div className="flex">
             {/* Weekday labels */}
-            <div className="mr-2 flex w-[34px] flex-col justify-between text-[11px] text-muted-foreground">
+            <div
+              className="mr-2 flex w-[34px] flex-col justify-between text-muted-foreground"
+              style={{ fontSize: labelFont }}
+            >
               <span>Mon</span>
               <span></span>
               <span>Wed</span>
@@ -194,9 +279,9 @@ export function StudyHeatmap() {
                   key={weekIndex}
                   className="grid shrink-0"
                   style={{
-                    gridTemplateRows: `repeat(7, ${CELL_SIZE}px)`,
-                    rowGap: `${CELL_GAP}px`,
-                    width: CELL_SIZE,
+                    gridTemplateRows: `repeat(7, ${cell}px)`,
+                    rowGap: `${gap}px`,
+                    width: cell,
                     marginLeft: getMarginLeft(weekIndex),
                   }}
                 >
@@ -208,12 +293,16 @@ export function StudyHeatmap() {
                           day.date
                         ).toDateString()}
 ${Math.floor(day.watchedSeconds / 60)} min studied`}
-                        className={`h-3.5 w-3.5 rounded-[3px] transition-all hover:scale-125 hover:ring-2 hover:ring-primary ${
+                        className={`rounded-[3px] transition-all hover:scale-125 hover:ring-2 hover:ring-primary ${
                           COLORS[day.level]
                         }`}
+                        style={{ width: cell, height: cell }}
                       />
                     ) : (
-                      <div key={dayIndex} className="h-3.5 w-3.5" />
+                      <div
+                        key={dayIndex}
+                        style={{ width: cell, height: cell }}
+                      />
                     )
                   )}
                 </div>
@@ -222,13 +311,20 @@ ${Math.floor(day.watchedSeconds / 60)} min studied`}
           </div>
 
           {/* Legend */}
-          <div className="mt-5 flex items-center justify-end gap-2 text-xs text-muted-foreground">
+          <div
+            className="mt-5 flex items-center justify-end gap-2 text-muted-foreground"
+            style={{ fontSize: labelFont }}
+          >
             <span>Less</span>
 
             {COLORS.map((color) => (
               <div
                 key={color}
-                className={`h-3 w-3 rounded-sm ${color}`}
+                className={`rounded-sm ${color}`}
+                style={{
+                  width: Math.max(8, cell - 2),
+                  height: Math.max(8, cell - 2),
+                }}
               />
             ))}
 

@@ -50,28 +50,28 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col items-center pt-6 sm:pt-12 lg:pt-16">
+    <div className="mx-auto flex w-full max-w-5xl flex-col items-center pt-2 sm:pt-8 lg:pt-16">
 
-      <div className="mb-8 text-center sm:mb-10">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+      <div className="mb-6 text-center sm:mb-10">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
           Import YouTube Course
         </h1>
 
-        <p className="text-muted-foreground mt-3">
+        <p className="text-muted-foreground mt-2 text-sm sm:mt-3 sm:text-base">
           Paste any YouTube playlist or single video and
           continue learning distraction-free.
         </p>
       </div>
 
       <Card className="w-full max-w-3xl rounded-3xl border-border/60 bg-card/60 backdrop-blur-xl">
-        <CardContent className="space-y-6 p-5 sm:p-8">
+        <CardContent className="space-y-5 p-4 sm:space-y-6 sm:p-8">
 
           <div className="relative">
-            <Link2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Link2 className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
 
             <Input
               placeholder="Paste YouTube playlist or video URL..."
-              className="h-14 rounded-2xl pl-12 text-base"
+              className="h-14 rounded-2xl pr-4 pl-12 text-base"
               value={url}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -86,10 +86,15 @@ export default function ImportPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row">
+          {/*
+           * Stacked on a phone, side by side once there is room. The import
+           * button stays disabled until a preview has come back, which is also
+           * what turns the pairing into a visible two-step.
+           */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
 
             <Button
-              className="h-12 flex-1 rounded-2xl"
+              className="h-12 w-full rounded-2xl sm:flex-1"
               onClick={handlePreview}
               disabled={previewMutation.isPending}
             >
@@ -99,7 +104,7 @@ export default function ImportPage() {
             </Button>
 
             <Button
-              className="h-12 flex-1 rounded-2xl"
+              className="h-12 w-full rounded-2xl sm:flex-1"
               onClick={handleImport}
               disabled={
                 !previewMutation.data ||

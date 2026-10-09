@@ -129,6 +129,30 @@
 }
 
 /*
+ * Interface scale.
+ *
+ * The layout was designed while the browser sat at 80% zoom, so the app now
+ * asks for that scale itself. Every Tailwind size - spacing, text, radii,
+ * containers - is expressed in rem, so lowering the root font size shrinks the
+ * whole interface exactly as browser zoom did. `zoom` and `transform: scale()`
+ * were not an option: both scale `vh`, which would leave every `min-h-screen`
+ * layout short of the bottom of the window.
+ *
+ * Scoped to laptops and up on purpose. At 80% the smallest text lands around
+ * 11px, which reads fine on a desktop but not on a phone - and mobile Safari
+ * zooms the whole page in when a field smaller than 16px takes focus. Below
+ * `lg` everything keeps its full size.
+ *
+ * `lg` is 64rem, and rem inside a media query resolves against the *initial*
+ * font size, so this breakpoint does not move when the rule below applies.
+ */
+@media (min-width: 64rem) {
+  html {
+    font-size: 80%;
+  }
+}
+
+/*
  * Responsive baseline.
  *
  * The app was laid out while the browser sat at 75% zoom, which hid the fact

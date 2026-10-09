@@ -18,6 +18,19 @@ export interface ChangePasswordRequest {
 }
 
 /**
+ * Public configuration the sign-in screens read before there is a session.
+ *
+ * `googleClientId` is the value Google Identity Services is initialised with.
+ * It is served by the API so the browser and the server cannot disagree about
+ * which OAuth client they are using - the server verifies ID tokens against
+ * this same id, so a mismatch would reject every sign-in.
+ */
+export interface AuthConfig {
+  googleClientId: string;
+  googleSignInEnabled: boolean;
+}
+
+/**
  * The ID token Google Identity Services hands the browser. The server verifies
  * it against the OAuth client id and answers with a session, so the client
  * never sees or handles a Google secret.

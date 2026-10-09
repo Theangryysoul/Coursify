@@ -2,6 +2,7 @@ import { api } from "./axios";
 
 import type { ApiResponse } from "@/types/api";
 import type {
+  AuthConfig,
   ChangePasswordRequest,
   LoginRequest,
   LoginResponse,
@@ -9,6 +10,16 @@ import type {
   RegisterRequest,
   RegisterResponse,
 } from "@/types/auth";
+
+/**
+ * Public auth configuration, read before there is a session. It never answers
+ * 401, so it is not one of the endpoints the refresh interceptor has to skip.
+ */
+export const getAuthConfig = async () => {
+  const response = await api.get<ApiResponse<AuthConfig>>("/auth/config");
+
+  return response.data.data;
+};
 
 export const login = async (data: LoginRequest) => {
   const response = await api.post<ApiResponse<LoginResponse>>(

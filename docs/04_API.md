@@ -87,6 +87,40 @@ Returns
 
 ---
 
+## Google Login
+
+```
+POST /auth/google
+```
+
+Exchanges a Google ID token (from Google Identity Services in the browser) for a
+session. The token is verified server-side against `GOOGLE_CLIENT_ID`, and the
+response is identical to a password login.
+
+---
+
+## Auth Config
+
+```
+GET /auth/config
+```
+
+Public. Returns the Google client id the browser should initialise Google
+Identity Services with, plus whether sign-in is enabled at all.
+
+```json
+{
+  "success": true,
+  "message": "Auth configuration fetched successfully",
+  "data": {
+    "googleClientId": "1234567890-abc.apps.googleusercontent.com",
+    "googleSignInEnabled": true
+  }
+}
+```
+
+---
+
 ## Logout
 
 ```

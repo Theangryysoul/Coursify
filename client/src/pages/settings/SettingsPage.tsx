@@ -26,14 +26,22 @@ import {
 import { getErrorMessage } from "@/utils/get-error-message";
 import { cn } from "@/lib/utils";
 
-// Shared sizing for every control on this page, matching the profile page so
-// the two do not drift apart: one height, one radius, one text size.
-const CONTROL_CLASS = "h-10 rounded-xl text-base";
-const BUTTON_CLASS = "h-10 rounded-xl px-6 text-base font-medium";
+/*
+ * Shared sizing for every control on this page.
+ *
+ * This used to be a compact `h-10`, matched against the profile page. At the
+ * scale the interface now renders at (see the interface scale in index.css)
+ * that landed at roughly 32px tall, which is too tight for a full-width text
+ * field, so the page uses the same control height as the rest of the app - the
+ * sign-in forms, the import field and the dashboard action button. The profile
+ * *dialogs* keep `h-10`: a modal is a compact context, a page is not.
+ */
+const CONTROL_CLASS = "h-12 rounded-xl text-base";
+const BUTTON_CLASS = "h-12 rounded-xl px-6 text-base font-medium";
 
 export default function SettingsPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
       <div>
         <h1 className="text-3xl font-bold sm:text-4xl">Settings</h1>
 
@@ -230,7 +238,9 @@ function AppearanceCard() {
       </CardHeader>
 
       <CardContent className="px-5 sm:px-6">
-        <div className="flex flex-wrap gap-3">
+        {/* Stacked and full width on a phone, where three buttons in a row
+            would wrap awkwardly around the card's padding. */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
           {THEMES.map(({ value, label, icon: Icon }) => {
             const isActive = mounted && theme === value;
 
@@ -239,7 +249,10 @@ function AppearanceCard() {
                 key={value}
                 type="button"
                 variant={isActive ? "default" : "outline"}
-                className={cn(BUTTON_CLASS, "gap-2")}
+                className={cn(
+                  BUTTON_CLASS,
+                  "w-full justify-center gap-2 sm:w-auto"
+                )}
                 onClick={() => setTheme(value)}
               >
                 <Icon className="h-4 w-4" />
