@@ -10,7 +10,6 @@ import {
 
 import {
   User,
-  BarChart3,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -90,16 +89,6 @@ export function UserMenu() {
         >
           <User className="h-4 w-4" />
           My Profile
-        </Link>
-      </DropdownMenuItem>
-
-      <DropdownMenuItem asChild>
-        <Link
-          to="/progress"
-          className="flex items-center gap-3 rounded-xl px-3 py-3 text-base"
-        >
-          <BarChart3 className="h-4 w-4" />
-          Progress
         </Link>
       </DropdownMenuItem>
 

@@ -11,8 +11,6 @@ export const ROUTES = {
 
   IMPORT: "/import",
 
-  PROGRESS: "/progress",
-
   PROFILE: "/profile",
 
   SETTINGS: "/settings",

@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   BookOpen,
   PlayCircle,
-  ChartNoAxesColumn,
   User,
   Settings,
 } from "lucide-react";
@@ -24,11 +23,6 @@ export const SIDEBAR_ITEMS = [
     title: "Import",
     icon: PlayCircle,
     href: ROUTES.IMPORT,
-  },
-  {
-    title: "Progress",
-    icon: ChartNoAxesColumn,
-    href: ROUTES.PROGRESS,
   },
   {
     title: "Profile",

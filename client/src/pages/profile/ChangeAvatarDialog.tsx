@@ -21,10 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 import { useUploadAvatar } from "@/hooks/user/useUploadAvatar";
 import { useDeleteAvatar } from "@/hooks/user/useDeleteAvatar";
 import { useAuthStore } from "@/store/auth.store";
+import { compressAvatar } from "@/utils/compress-avatar";
+import { getErrorMessage } from "@/utils/get-error-message";
 import { toast } from "sonner";
 
 export function ChangeAvatarDialog() {
@@ -46,6 +49,13 @@ export function ChangeAvatarDialog() {
   const [preview, setPreview] =
     useState(user?.avatar?.url);
 
+  const [isOptimizing, setIsOptimizing] =
+    useState(false);
+
+  // Picking a second image while the first is still being shrunk would
+  // otherwise let the slower one finish last and win.
+  const selectionRef = useRef(0);
+
   useEffect(() => {
     if (!open) return;
 
@@ -63,7 +73,7 @@ export function ChangeAvatarDialog() {
     };
   }, [preview]);
 
-  const handleSelect = (
+  const handleSelect = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const selected =
@@ -71,21 +81,36 @@ export function ChangeAvatarDialog() {
 
     if (!selected) return;
 
-    const MAX_SIZE = 300 * 1024;
+    const selection = selectionRef.current + 1;
+    selectionRef.current = selection;
 
-    if (selected.size > MAX_SIZE) {
-      toast.error(
-        "Image size must be less than 300 KB."
-      );
+    // Show the chosen picture straight away; the shrinking below only
+    // changes what gets uploaded, not what the user sees.
+    setPreview(URL.createObjectURL(selected));
+    setFile(undefined);
+    setIsOptimizing(true);
 
-      e.target.value = "";
-      return;
+    try {
+      const optimized = await compressAvatar(selected);
+
+      if (selectionRef.current !== selection) return;
+
+      setFile(optimized);
+    } catch (error) {
+      if (selectionRef.current !== selection) return;
+
+      toast.error(getErrorMessage(error));
+
+      setPreview(user?.avatar?.url);
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    } finally {
+      if (selectionRef.current === selection) {
+        setIsOptimizing(false);
+      }
     }
-
-    setFile(selected);
-    setPreview(
-      URL.createObjectURL(selected)
-    );
   };
 
   const handleUpload = () => {
@@ -103,6 +128,10 @@ export function ChangeAvatarDialog() {
         if (inputRef.current) {
           inputRef.current.value = "";
         }
+      },
+
+      onError: (error) => {
+        toast.error(getErrorMessage(error));
       },
     });
   };
@@ -138,6 +167,7 @@ export function ChangeAvatarDialog() {
               if (
                 e.key === "Enter" &&
                 file &&
+                !isOptimizing &&
                 !uploadAvatar.isPending
               ) {
                 e.preventDefault();
@@ -164,6 +194,7 @@ export function ChangeAvatarDialog() {
             variant="outline"
             size="lg"
             className="h-10 rounded-xl px-6 text-base font-medium"
+            disabled={isOptimizing}
             onClick={() =>
               inputRef.current?.click()
             }
@@ -171,17 +202,30 @@ export function ChangeAvatarDialog() {
             Choose Image
           </Button>
 
+          <p className="text-muted-foreground text-center text-sm">
+            Any size works — we shrink it to
+            under 300 KB for you.
+          </p>
+
           <Button
             type="submit"
             size="lg"
             className="h-10 w-full rounded-xl px-6 text-base font-medium"
             disabled={
               !file ||
+              isOptimizing ||
               uploadAvatar.isPending
             }
             onClick={handleUpload}
           >
-            Upload Avatar
+            {isOptimizing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Optimizing…
+              </>
+            ) : (
+              "Upload Avatar"
+            )}
           </Button>
 
           <AlertDialog>
