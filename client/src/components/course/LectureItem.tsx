@@ -1,16 +1,12 @@
 import { forwardRef } from "react";
-import {
-  CheckCircle2,
-  PlayCircle,
-} from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import type { Video } from "@/types/course-details";
 import { useToggleCompleted } from "@/hooks/progress/useToggleCompleted";
 
 const formatDuration = (duration: string) => {
-  const match = duration.match(
-    /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
-  );
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 
   if (!match) return duration;
 
@@ -19,16 +15,12 @@ const formatDuration = (duration: string) => {
   const seconds = Number(match[3] ?? 0);
 
   if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(
-      2,
-      "0"
-    )}:${String(seconds).padStart(2, "0")}`;
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")}`;
   }
 
-  return `${minutes}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 };
 
 interface LectureItemProps {
@@ -37,86 +29,87 @@ interface LectureItemProps {
   onClick: () => void;
 }
 
-export const LectureItem = forwardRef<
-  HTMLDivElement,
-  LectureItemProps
->(function LectureItem(
-  {
-    lecture,
-    active,
-    onClick,
-  },
-  ref
-) {
-  const toggleCompleted =
-    useToggleCompleted();
+export const LectureItem = forwardRef<HTMLDivElement, LectureItemProps>(
+  function LectureItem({ lecture, active, onClick }, ref) {
+    const toggleCompleted = useToggleCompleted();
 
-  return (
-    <div
-      ref={ref}
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (
-          e.key === "Enter" ||
-          e.key === " "
-        ) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className={`
-        flex
-        w-full
-        cursor-pointer
-        items-center
-        justify-between
-        rounded-xl
-        p-4
-        transition
+    const thumbnail =
+      lecture.thumbnail ||
+      `https://i.ytimg.com/vi/${lecture.videoId}/mqdefault.jpg`;
 
-        ${
-          active
-            ? `
-              border
-              border-primary/40
-              bg-primary/10
-              shadow-md
-              ring-1
-              ring-primary/20
-            `
-            : "hover:bg-muted"
-        }
-      `}
-    >
-      <div className="flex items-center gap-3">
+    return (
+      <div
+        ref={ref}
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className={cn(
+          "group flex w-full cursor-pointer items-start gap-3 rounded-xl p-2 transition",
+          active ? "bg-primary/10 ring-primary/30 ring-1" : "hover:bg-muted"
+        )}
+      >
+        <div className="bg-muted relative w-28 shrink-0 overflow-hidden rounded-lg">
+          <img
+            src={thumbnail}
+            alt=""
+            loading="lazy"
+            className="aspect-video w-full object-cover"
+          />
+
+          <span className="absolute right-1 bottom-1 rounded bg-black/80 px-1 text-[10px] font-medium text-white">
+            {formatDuration(lecture.duration)}
+          </span>
+
+          {active && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/35">
+              <PlayCircle className="h-7 w-7 text-white" />
+            </span>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 py-0.5">
+          <p
+            className={cn(
+              "line-clamp-2 text-sm leading-snug",
+              active ? "text-foreground font-semibold" : "font-medium"
+            )}
+          >
+            {lecture.title}
+          </p>
+
+          <span className="text-muted-foreground mt-1 block text-xs">
+            {active ? "Now playing" : lecture.completed ? "Completed" : "Video"}
+          </span>
+        </div>
+
         <button
           type="button"
+          aria-label={
+            lecture.completed ? "Mark as not completed" : "Mark as completed"
+          }
+          title={
+            lecture.completed ? "Mark as not completed" : "Mark as completed"
+          }
           onClick={(e) => {
             e.stopPropagation();
 
-            toggleCompleted.mutate(
-              lecture.videoId
-            );
+            toggleCompleted.mutate(lecture.videoId);
           }}
-          className="rounded-full"
+          className="mt-1 shrink-0 rounded-full"
         >
           {lecture.completed ? (
             <CheckCircle2 className="h-5 w-5 text-green-500 transition hover:scale-110" />
           ) : (
-            <PlayCircle className="h-5 w-5 text-muted-foreground transition hover:scale-110" />
+            <Circle className="text-muted-foreground h-5 w-5 transition hover:scale-110" />
           )}
         </button>
-
-        <span className="text-left">
-          {lecture.title}
-        </span>
       </div>
-
-      <span className="text-sm text-muted-foreground">
-        {formatDuration(lecture.duration)}
-      </span>
-    </div>
-  );
-});
+    );
+  }
+);

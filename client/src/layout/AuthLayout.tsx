@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Logo } from "@/components/common/Logo";
+import { Footer } from "@/components/common/Footer";
 
 import { PlayCircle, ChartColumn, Clock3, LayoutDashboard } from "lucide-react";
 
@@ -50,14 +51,14 @@ export function AuthLayout({ children, description, title }: AuthLayoutProps) {
      * settings page, so signing out and back in silently discarded their
      * Appearance choice.
      */
-    <div className="dark bg-background text-foreground relative min-h-screen overflow-hidden">
+    <div className="dark bg-background text-foreground relative flex min-h-screen flex-col overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-900" />
 
       <div className="absolute top-0 -left-40 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:gap-6 lg:px-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:gap-6 lg:px-8">
         {/*
          * The hero is a desktop affordance. On a phone it filled the first
          * screen and pushed the form - the only thing the visitor came for -
@@ -109,10 +110,7 @@ export function AuthLayout({ children, description, title }: AuthLayoutProps) {
 
         {/* Form */}
         <section className="w-full max-w-md lg:w-[45%]">
-          <Logo
-            theme="dark"
-            className="mx-auto mb-6 h-10 w-auto lg:hidden"
-          />
+          <Logo theme="dark" className="mx-auto mb-6 h-10 w-auto lg:hidden" />
 
           <Card className="border-border bg-card gap-0 rounded-3xl border py-0 shadow-2xl backdrop-blur-2xl">
             <CardHeader className="px-5 pt-6 text-center sm:px-8 sm:pt-8">
@@ -131,6 +129,8 @@ export function AuthLayout({ children, description, title }: AuthLayoutProps) {
           </Card>
         </section>
       </div>
+
+      <Footer logoTheme="dark" className="border-border/40 relative z-10" />
     </div>
   );
 }

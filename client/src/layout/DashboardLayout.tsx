@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { PageTransition } from "@/components/common/PageTransition";
 import { Logo } from "@/components/common/Logo";
+import { Footer } from "@/components/common/Footer";
 import { UserMenu } from "@/components/dashboard/UserMenu";
 import { ROUTES } from "@/constants/routes";
 
@@ -18,26 +19,7 @@ import { ROUTES } from "@/constants/routes";
  */
 function TopBar() {
   return (
-    <header
-      className="
-        sticky
-        top-0
-        z-40
-        flex
-        h-16
-        shrink-0
-        items-center
-        gap-3
-        border-b
-        border-border/60
-        bg-background/70
-        px-4
-        backdrop-blur-2xl
-        sm:px-6
-        lg:justify-end
-        lg:px-8
-      "
-    >
+    <header className="border-border/60 bg-background/70 sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-2xl sm:px-6 lg:justify-end lg:px-8">
       {/* Only present while the sidebar is hidden. */}
       <div className="flex items-center gap-3 lg:hidden">
         <MobileNav />
@@ -95,6 +77,8 @@ export function DashboardLayout() {
             <Outlet />
           </PageTransition>
         </div>
+
+        <Footer />
       </main>
     </div>
   );
